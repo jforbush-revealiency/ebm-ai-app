@@ -9,7 +9,6 @@ namespace :import do
     end
     puts "Starting import from #{file_path}..."
     import_user = User.find_by(role: 'imports') || User.find_by(role: 'site_admin')
-    default_drive_type = DriveType.first
     success_count = 0
     error_count   = 0
     errors        = []
