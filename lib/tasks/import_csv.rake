@@ -36,12 +36,13 @@ namespace :import do
           ec.rated_hp       = row['Engine HP'].to_f
           ec.is_real_values = false
         end
-vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
-vehicle.description   ||= row['Vehicle #'].to_s.strip
-vehicle.model         ||= row['Vehicle Model'].to_s.strip
-vehicle.location      ||= location
-vehicle.engine_config ||= engine_config
-vehicle.save(validate: false)
+        vehicle_serial = row['Vehicle Serial #'].to_s.strip
+        vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
+        vehicle.description   ||= row['Vehicle #'].to_s.strip
+        vehicle.model         ||= row['Vehicle Model'].to_s.strip
+        vehicle.location      ||= location
+        vehicle.engine_config ||= engine_config
+        vehicle.save(validate: false)
         test_date = begin
           Date.strptime(row['Test Date'].to_s.strip, '%m/%d/%Y')
         rescue
