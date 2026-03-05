@@ -81,7 +81,7 @@ class ValidEmissionTest < ApplicationRecord
       location = vehicle.location 
       last_vehicle_stat = vehicle_stats.last
 
-      auto_user = User.find_by(email: "ENV.fetch("ADMIN_EMAIL", "admin@yourdomain.com")")
+      auto_user = User.find_by(email: ENV.fetch("ADMIN_EMAIL", "admin@yourdomain.com"))
 
       data_points = 0;
       total_percent_load = 0;
