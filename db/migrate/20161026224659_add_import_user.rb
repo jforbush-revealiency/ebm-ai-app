@@ -1,10 +1,12 @@
-class AddImportUser < ActiveRecord::Migration[5.0]
+class AddImportUser < ActiveRecord::Migration[7.1]
   def up
-    User.create!({email: "imports@ebmpros.com", is_active: false,
-                  first_name: "Import", last_name: "User",
-                  role: "imports", password: "321321321", password_confirmation: "321321321" })
+    return if User.exists?(email: "imports@ebmpros.com")
+    u = User.new(email: "imports@ebmpros.com", is_active: false,
+                 first_name: "Import", last_name: "User",
+                 role: "imports", password: "changeme123", password_confirmation: "changeme123")
+    u.save(validate: false)
   end
   def down
-    User.where(email: "import@ebmpros.com").delete_all
+    User.where(email: "imports@ebmpros.com").delete_all
   end
 end
