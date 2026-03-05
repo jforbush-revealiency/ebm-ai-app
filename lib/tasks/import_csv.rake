@@ -31,9 +31,19 @@ namespace :import do
         end
 
         engine_make = row['Engine Make'].to_s.strip
-        manufacturer = Manufacturer.find_or_create_by!(code: engine_make.upcase) do |m|
-          m.description = engine_make
-        end
+manufacturer = Manufacturer.find_or_create_by!(code: engine_make.upcase) do |m|
+  m.description = engine_make
+end
+
+engine = Engine.find_or_create_by!(code: engine_model_code, manufacturer: manufacturer) do |e|
+  e.description = engine_model_code
+end
+
+engine_config = EngineConfig.find_or_create_by!(engine: engine, code: engine_model_code) do |ec|
+  ec.rated_rpm      = row['Engine RPM'].to_f
+  ec.rated_hp       = row['Engine HP'].to_f
+  ec.is_real_values = false
+end
 
         engine_model_code = row['Engine Model'].to_s.strip
         engine_config = EngineConfig.find_or_create_by!(manufacturer: manufacturer, model: engine_model_code) do |ec|
