@@ -1,0 +1,37 @@
+﻿#splash-page {
+    z-index: 99999 !important;
+}
+
+.page-splash {
+    z-index: 99999 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: .9;
+    pointer-events: auto;
+    backface-visibility: hidden;
+    transition: opacity 0.3s linear;
+    text-align: center;
+}
+
+.page-splash-message {
+    text-align: center;
+    margin: 20% auto 0 auto;
+    font-size: 200%;
+    font-family: inherit;
+    font-weight: bold;
+    text-decoration: none;
+    color: #000000;
+    padding: 0;
+}
+
+.page-splash-message.page-splash-message-subtle {
+    margin: 20% auto 0 auto;
+    font-size: 200%;
+}
+
+.page-splash-spinner {
+    color: #808080;
+}

@@ -1,0 +1,146 @@
+/**
+ * Main application module
+ *
+ * Type: Module
+ *
+ * ID: app
+ *
+ */
+//= depend_on_asset 'secure/app/views/input/input.html'
+//= depend_on_asset 'secure/app/views/changePassword/changePassword.html'
+//= depend_on_asset 'secure/app/views/maintenance/driveTypes/driveTypes.html'
+//= depend_on_asset 'secure/app/views/maintenance/manufacturers/manufacturers.html'
+//= depend_on_asset 'secure/app/views/maintenance/engines/engines.html'
+//= depend_on_asset 'secure/app/views/maintenance/engineConfigs/engineConfigs.html'
+//= depend_on_asset 'secure/app/views/maintenance/companies/companies.html'
+//= depend_on_asset 'secure/app/views/maintenance/vehicles/vehicles.html'
+//= depend_on_asset 'secure/app/views/maintenance/parameters/parameters.html'
+//= depend_on_asset 'secure/app/views/maintenance/users/users.html'
+//= depend_on_asset 'secure/app/views/reports/findInput/findInput.html'
+//= depend_on_asset 'secure/app/views/reports/viewInput/viewInput.html'
+//= depend_on_asset 'secure/app/views/reports/viewOutput/viewOutput.html'
+(function () {
+  'use strict';
+
+  var app = angular.module('app', [
+    // Angular Modules
+    'ngAnimate',
+    'ngRoute',
+    'ngSanitize',
+    'ngResource',
+    'ngMessages',
+
+    // 3rd Party Modules
+    'ui.select',
+    'ui.bootstrap',
+    'selectionModel',
+    'smart-table',
+    'angular-loading-bar',
+
+    // Shared Modules
+    'messageBox',
+    'pageSettings',
+    'stringFilters',
+    'currentUserApi',
+    'httpInterceptor',
+    'displayRequiredAsterisk',
+
+    // Views
+    'home',
+    'users',
+    'input',
+    'engines',
+    'exportIO',
+    'vehicles',
+    'findInput',
+    'companies',
+    'viewInput',
+    'viewOutput',
+    'parameters',
+    'driveTypes',
+    'manufacturers',
+    'engineConfigs',
+    'changePassword',
+    'exportVehicleStats',
+  ]);
+
+  app.value('clientRootPath', GlobalUrls.getClientRootPath());
+
+  app.config([
+    '$routeProvider',
+    '$httpProvider',
+    'cfpLoadingBarProvider',
+    'httpInterceptorProvider',
+    'selectionModelOptionsProvider',
+    function($routeProvider, $httpProvider, cfpLoadingBarProvider, httpInterceptorProvider, selectionModelOptionsProvider) {
+
+      $httpProvider.interceptors.push('httpInterceptor');
+
+      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+      cfpLoadingBarProvider.spinnerTemplate = '<div class="pleaseWait dissolve-animation"><div class="pleaseWait-message pleaseWait-message-subtle">Loading...</div><i class="fa fa-spinner fa-5x fa-spin pleaseWait-spinner"></i></div>';
+      cfpLoadingBarProvider.latencyThreshold = 500;
+
+      selectionModelOptionsProvider.set({
+        selectedClass: 'success'
+      });
+
+      $routeProvider.when(/*'/', {
+          templateUrl: GlobalUrls.getClientRootPath() + 'views/home/home.html',
+          controller: 'homeController'
+        }).when(*/'/input/:id?', {
+          templateUrl: '<%= asset_path("secure/app/views/input/input.html") %>',
+          controller: 'inputController'
+        }).when('/change-password/:required?', {
+          templateUrl: '<%= asset_path("secure/app/views/changePassword/changePassword.html") %>',
+          controller: 'changePasswordController'
+        }).when('/maintenance/drive-types', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/driveTypes/driveTypes.html") %>',
+          controller: 'driveTypesController'
+        }).when('/maintenance/manufacturers', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/manufacturers/manufacturers.html") %>',
+          controller: 'manufacturersController'
+        }).when('/maintenance/engines', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/engines/engines.html") %>',
+          controller: 'enginesController'
+        }).when('/maintenance/engine-configs', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/engineConfigs/engineConfigs.html") %>',
+          controller: 'engineConfigsController'
+        }).when('/maintenance/companies', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/companies/companies.html") %>',
+          controller: 'companiesController'
+        }).when('/maintenance/vehicles', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/vehicles/vehicles.html") %>',
+          controller: 'vehiclesController'
+        }).when('/maintenance/parameters', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/parameters/parameters.html") %>',
+          controller: 'parametersController'
+        }).when('/maintenance/users', {
+          templateUrl: '<%= asset_path("secure/app/views/maintenance/users/users.html") %>',
+          controller: 'usersController'
+        }).when('/reports/find-input/', {
+          templateUrl: '<%= asset_path("secure/app/views/reports/findInput/findInput.html") %>',
+          controller: 'findInputController'
+        }).when('/reports/view-input/:id?', {
+          templateUrl: '<%= asset_path("secure/app/views/reports/viewInput/viewInput.html") %>',
+          controller: 'viewInputController'
+        }).when('/reports/view-results/:id?', {
+          templateUrl: '<%= asset_path("secure/app/views/reports/viewOutput/viewOutput.html") %>',
+          controller: 'viewOutputController'
+        }).when('/reports/export-io', {
+          templateUrl: '<%= asset_path("secure/app/views/reports/exportIO/exportIO.html") %>',
+          controller: 'exportIOController'
+        }).when('/reports/export-vehicle-stats', {
+          templateUrl: '<%= asset_path("secure/app/views/reports/exportVehicleStats/exportVehicleStats.html") %>',
+          controller: 'exportVehicleStatsController'
+        }).otherwise({
+          redirectTo: '/input'
+        });
+    }
+  ]);
+
+  app.run(['$route',
+          function($route) {
+            $route.reload();
+          }]);
+})();

@@ -1,0 +1,82 @@
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
+ * or any plugin's vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any other CSS/SCSS
+ * files in this directory. Styles in this file should be added after the last require_* statement.
+ * It is generally better to create a new file per style scope.
+ *
+ *= require_tree ./secure
+ *= require_self
+ */
+
+$navbar-height: 75px;
+$brand-primary: #0051A4;
+$state-success-bg: #6abd45;
+
+@import "bootstrap-sprockets";
+@import "bootstrap";
+@import "font-awesome";
+
+body {padding-top: $navbar-height};
+
+.spacer-left {
+  margin-left: 20px;
+}
+
+.ng-invalid {
+  border: 1px solid red !important;
+}
+
+form.ng-invalid {
+  border: none;
+  border-width: 0px !important;
+}
+
+.error-messages.ng-active {
+  background: maroon;
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  margin-top: 10px;
+  position: relative;
+}
+
+.error-messages.ng-active:after {
+  position:absolute;
+  top: -10px;
+  content:"";
+  left:20px;
+  border-style: solid;
+  border-color: transparent transparent maroon;
+  border-width: 5px;
+}
+
+.row-ok {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+  background-color: $state-success-bg;
+  color: #fff;
+}
+
+.row-extremely {
+  padding: 5px 5px 5px 5px;
+  text-align: left;
+  background-color: #ce1a1a;
+  color: #fff;
+}
+
+.navbar-brand {
+  padding: 0px;
+}
+
+.navbar-brand>img {
+  height: 100%;
+  padding-left: 10px;
+  width: auto;
+}

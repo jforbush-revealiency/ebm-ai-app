@@ -1,0 +1,186 @@
+﻿<div class="row top25">
+  <div class="col-xs-12">
+    <a ng-click="back()" class="btn btn-primary"><span class="glyphicon glyphicon-chevron-left"></span>Back</a>
+  </div>
+</div>
+<div class="row bottom25" ng-if="viewModel.output_id">
+  <div class="col-xs-8 col-xs-offset-2">
+    <h1>Results</h1>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-horizontal top25">
+          <div class="row">
+            <label class="col-md-5">Results #</label>
+            <div class="col-md-2 text-left">
+              {{viewModel.output.id}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-5">Processed On</label>
+            <div class="col-md-7">
+              {{viewModel.output.processed | date : 'medium' }}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-5">Submitted By</label>
+            <div class="col-md-7">
+              {{viewModel.output.submitter_first_name}}&nbsp;
+              {{viewModel.output.submitter_last_name}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-5">Submittor's Email</label>
+            <div class="col-md-7">
+              <a ng-href="mailto:{{viewModel.output.submitter_email}}">{{viewModel.output.submitter_email}}</a>
+            </div>
+          </div>
+          <div class="row" ng-if="viewModel.output.is_input_auto_generated">
+            <div class="col-md-12"><h3>Auto Generated</h3></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-horizontal top25">
+          <div class="row">
+            <label class="col-md-4">Company</label>
+            <div class="col-md-8">
+              {{viewModel.output.company_code}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Location</label>
+            <div class="col-md-8">
+              {{viewModel.output.location_code}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Vehicle #</label>
+            <div class="col-md-8">
+              {{viewModel.output.vehicle_code}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Engine Model</label>
+            <div class="col-md-8">
+              {{viewModel.output.engine_code}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Single Stack</label>
+            <div class="col-md-8">
+              {{viewModel.output.is_single_stack === 'true' ? 'Yes' : 'No'}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Engine Hours</label>
+            <div class="col-md-2 text-right">
+              {{viewModel.output.engine_hours | number : 0}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <hr/>
+      </div>
+    </div>
+    <div class="form-horizontal top25">
+      <div class="row" ng-if="!viewModel.output.is_input_auto_generated">
+        <label class="col-md-4">Engine Hours</label>
+        <div class="col-md-8" ng-class="rowColor(viewModel.output.engine_hours_code, 'Message_ok_engine_hours')">
+          {{viewModel.output.engine_hours_message}}
+        </div>
+      </div>
+      <div class="row" ng-if="!viewModel.output.is_input_auto_generated">
+        <div class="col-md-4">
+          <label>Engine / Alternator RPM</label><br/>
+          {{viewModel.output.engine_rpm | number : 0}} / {{viewModel.output.alternator_rpm | number : 0}}
+        </div>
+        <div class="col-md-8" ng-class="rowColor(viewModel.output.engine_alternator_rpm_code, 'Message_ok_engine_alternator_rpm_settings')">
+          {{viewModel.output.engine_alternator_rpm_message}}
+        </div>
+      </div>
+      <div class="row" ng-if="!viewModel.output.is_input_auto_generated">
+        <div class="col-md-4">
+          <label>Engine / Alternator HP</label><br/>
+          {{viewModel.output.engine_hp | number : 0}} / {{viewModel.output.alternator_hp | number : 0}}
+        </div>
+        <div class="col-md-8" ng-class="rowColor(viewModel.output.engine_alternator_hp_code, 'Message_ok_engine_alternator_hp_settings')">
+          {{viewModel.output.engine_alternator_hp_message}}
+        </div>
+      </div>
+
+      <div ng-if="viewModel.output.is_single_stack === 'false'">
+        <h3>Bank Balance Check</h3>
+
+        <div class="row">
+          <label class="col-md-4">CO<sub>2</sub>%</label>
+          <div class="col-md-8" ng-class="rowColor(viewModel.output.bank_balance_check_co2_percent_code, 'Message_ok_bank_balance_check')">
+            {{viewModel.output.bank_balance_check_co2_percent_message}}
+          </div>
+        </div>
+        <div class="row">
+          <label class="col-md-4">CO</label>
+          <div class="col-md-8" ng-class="rowColor(viewModel.output.bank_balance_check_co_code, 'Message_ok_bank_balance_check')">
+            {{viewModel.output.bank_balance_check_co_message}}
+          </div>
+        </div>
+        <div class="row">
+          <label class="col-md-4">NO<sub>x</sub></label>
+          <div class="col-md-8" ng-class="rowColor(viewModel.output.bank_balance_check_nox_code, 'Message_ok_bank_balance_check')">
+            {{viewModel.output.bank_balance_check_nox_message}}
+          </div>
+        </div>
+      </div>
+
+      <h3>CO<sub>2</sub>%</h3>
+      <div class="row">
+        <div class="col-md-6">
+          <h4 ng-if="viewModel.output.is_single_stack === 'false'">Left Bank - {{viewModel.output.left_bank_co2_percent}}%</h4>
+          <h4 ng-if="viewModel.output.is_single_stack !== 'false'">Bank - {{viewModel.output.left_bank_co2_percent}}%</h4>
+          <div ng-class="rowColor(viewModel.output.co2_percent_left_bank_code, 'Message_ok_co2_percentage_banks')" 
+            ng-bind-html="viewModel.output.co2_percent_left_bank_message | nl2br"></div>
+        </div>
+        <div class="col-md-6" ng-if="viewModel.output.is_single_stack === 'false'">
+          <h4>Right Bank - {{viewModel.output.right_bank_co2_percent}}%</h4>
+          <div ng-class="rowColor(viewModel.output.co2_percent_right_bank_code, 'Message_ok_co2_percentage_banks')" 
+            ng-bind-html="viewModel.output.co2_percent_right_bank_message | nl2br"></div>
+        </div>
+      </div>
+
+      <div ng-if="!viewModel.output.is_input_auto_generated">
+        <h3>CO</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <h4 ng-if="viewModel.output.is_single_stack === 'false'">Left Bank - {{viewModel.output.left_bank_co | number : 0}}</h4>
+            <h4 ng-if="viewModel.output.is_single_stack !== 'false'">Bank - {{viewModel.output.left_bank_co | number : 0}}</h4>
+            <div ng-class="rowColor(viewModel.output.co_left_bank_code, 'Message_ok_co_banks')" 
+              ng-bind-html="viewModel.output.co_left_bank_message | nl2br"></div>
+          </div>
+          <div class="col-md-6" ng-if="viewModel.output.is_single_stack === 'false'">
+            <h4>Right Bank - {{viewModel.output.right_bank_co | number : 0}}</h4>
+            <div ng-class="rowColor(viewModel.output.co_right_bank_code, 'Message_ok_co_banks')" 
+              ng-bind-html="viewModel.output.co_right_bank_message | nl2br"></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>NO<sub>x</sub></h3>
+      <div class="row">
+        <div class="col-md-6">
+          <h4 ng-if="viewModel.output.is_single_stack === 'false'">Left Bank - {{viewModel.output.left_bank_nox | number : 0}}</h4>
+          <h4 ng-if="viewModel.output.is_single_stack !== 'false'">Bank - {{viewModel.output.left_bank_nox | number : 0}}</h4>
+          <div ng-class="rowColor(viewModel.output.nox_left_bank_code, 'Message_ok_nox_banks')" 
+            ng-bind-html="viewModel.output.nox_left_bank_message | nl2br"></div>
+        </div>
+        <div class="col-md-6" ng-if="viewModel.output.is_single_stack === 'false'">
+          <h4>Right Bank - {{viewModel.output.right_bank_nox | number : 0}}</h4>
+          <div ng-class="rowColor(viewModel.output.nox_right_bank_code, 'Message_ok_nox_banks')" 
+            ng-bind-html="viewModel.output.nox_right_bank_message | nl2br"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

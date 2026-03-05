@@ -1,0 +1,192 @@
+<h1>
+  Users 
+</h1>
+<div class="row top25">
+  <div class="col-xs-2">
+    <button class="btn btn-primary" ng-click="openForm()">Add new&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+  </div>
+  <div class="col-xs-10">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-xs-12">
+    <h2 ng-if="!viewModel.allData.length">
+      Data hasn't been added. Please add the first record.
+    </h2>
+  </div>
+</div>
+<div class="row top25" ng-show="viewModel.showForm">
+  <div class="col-md-6 col-md-offset-3">
+    <form name="form" ng-submit="save()" class="alert alert-warning" 
+      novalidate auto-display-required-asterisk>
+      <h3>{{viewModel.formTitle}}</h3>
+      <div class="form-group">
+        <label for="selectedLocation">Company / Location</label>
+        <ui-select id="selectedLocation" name="selectedLocation" 
+                  ng-model="viewModel.selectedLocation" ng-required="form.$submitted">
+          <ui-select-match placeholder="Select a location">
+            {{$select.selected.company_code}}
+            {{$select.selected.code}}
+          </ui-select-match>
+          <ui-select-choices repeat="row in (viewModel.allLocations | filter: {code: $select.search})">
+            <div class="bold" style="width:20%;" ng-bind-html="row.company_code | highlight: $select.search"></div>
+            <div class="normal" style="width:20%;"ng-bind-html="row.code | highlight: $select.search"></div>
+          </ui-select-choices>
+        </ui-select>
+        <div class="error-messages" ng-messages="form.selectedLocation.$error" role="alert">
+          <div ng-message="required">Please select a valid company / location.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-6">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" class="form-control" id="firstName" placeholder="First Name" 
+                   name="firstName" ng-model="viewModel.firstName" ng-required="form.$submitted">
+            <div class="error-messages" ng-messages="form.firstName.$error" role="alert">
+              <div ng-message="required">Please enter a valid first name.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" class="form-control" id="lastName" placeholder="Last Name" 
+                   name="lastName" ng-model="viewModel.lastName" ng-required="form.$submitted">
+            <div class="error-messages" ng-messages="form.lastName.$error" role="alert">
+              <div ng-message="required">Please enter a valid last name.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" class="form-control" id="email" placeholder="Email" 
+               name="email" ng-model="viewModel.email" ng-required="form.$submitted">
+        <div class="error-messages" ng-messages="form.email.$error" role="alert">
+          <div ng-message="required">Please enter a valid email.</div>
+          <div ng-message="email">Please enter a valid email.</div>
+        </div>
+      </div>
+      <div class="row bottom10" ng-if="viewModel.selectedData">
+        <div class="col-xs-12">
+          <hr/>
+          The password is only required if you want to change it.
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-6">
+          <div class="form-group">
+            <label for="password">New Password</label>
+            <input type="password" class="form-control" id="password" placeholder="New Password" 
+                   name="password" ng-model="viewModel.password" ng-required="!viewModel.selectedData && form.$submitted">
+            <div class="error-messages" ng-messages="form.password.$error" role="alert">
+              <div ng-message="required">Please enter a valid password.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="form-group">
+            <label for="passwordConfirmation">Password Confirmation</label>
+            <input type="password" class="form-control" id="passwordConfirmation" placeholder="Password Confirmation" 
+                   name="passwordConfirmation" ng-model="viewModel.passwordConfirmation" ng-required="!viewModel.selectedData && form.$submitted">
+            <div class="error-messages" ng-messages="form.passwordConfirmation.$error" role="alert">
+              <div ng-message="required">Please enter a the password again.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row bottom10" ng-if="viewModel.selectedData">
+        <div class="col-xs-12">
+          <hr/>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-4">
+          <div class="form-group">
+            <label for="selectedRole">Role</label>
+            <ui-select id="selectedRole" name="selectedRole" 
+                      ng-model="viewModel.selectedRole" ng-required="form.$submitted">
+              <ui-select-match placeholder="Select a role">{{$select.selected.description}}</ui-select-match>
+              <ui-select-choices repeat="row in (viewModel.allRoles | filter: {code: $select.search})">
+                <span ng-bind-html="row.description | highlight: $select.search"></span>
+              </ui-select-choices>
+            </ui-select>
+            <div class="error-messages" ng-messages="form.selectedRole.$error" role="alert">
+              <div ng-message="required">Please select a valid role.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-3 top20">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="isActive" ng-model="viewModel.isActive"> Is Active 
+            </label>
+          </div>
+        </div>
+        <div class="col-xs-5 top20">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="requirePasswordChange" ng-model="viewModel.requirePasswordChange"> Change password next login
+            </label>
+          </div>
+        </div>
+      </div>
+      <hr/>
+      <div class="form-group" ng-if="viewModel.selectedRole.code !== 'imports'">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-default" ng-click="clear()">Close</button>
+        <button type="button" class="btn btn-danger pull-right" ng-click="remove(data)" ng-if="viewModel.selectedData">
+          Delete&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="form-group" ng-if="viewModel.selectedRole && viewModel.selectedRole.code === 'imports'">
+        The import role type is used by the system to import data.  It can't be managed.
+      </div>
+    </form>
+  </div>
+</div>
+
+<table st-table="viewModel.displayedData" st-safe-src="viewModel.allData" class="table table-striped top25" ng-if="viewModel.allData.length">
+  <thead>
+    <tr>
+      <th width="20%" st-sort="company_code">Company</th>
+      <th width="20%" st-sort="location_code">Location</th>
+      <th width="20%" st-sort="fullname">Name</th>
+      <th width="35%" st-sort="email">Email</th>
+      <th width="5%">&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allData | filter:viewModel.search" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td>
+          {{data.company_code}}
+      </td>
+      <td>
+          {{data.location_code}}
+      </td>
+      <td>
+          {{data.fullname}}
+      </td>
+      <td>
+          {{data.email}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-edit" ></span>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+				<td colspan="5" class="text-center">
+          <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

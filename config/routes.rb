@@ -1,0 +1,46 @@
+require 'public_api_constraints'
+
+Rails.application.routes.draw do
+  devise_for :users,
+    skip: [:registrations],
+    path_names: { sign_in: 'login', sign_out: 'logout' },
+    path_prefix: 'secure'
+
+  devise_scope :user do
+    get  '/secure/api/current_user'              => 'users/sessions#show_current_user'
+    post 'secure/api/check/is_user'              => 'users/users#is_user', as: 'is_user'
+    put  '/secure/api/current_user/change_password' => 'users/users#change_password'
+  end
+
+  namespace :secure do
+    root to: "home#index"
+
+    namespace :api do
+      resources :users do
+        collection { put 'current_change_password' }
+      end
+      resources :inputs do
+        collection { get 'export' }
+      end
+      resources :valid_emission_tests
+      resources :outputs
+      resources :engines
+      resources :vehicles
+      resources :companies
+      resources :locations
+      resources :parameters
+      resources :drive_types
+      resources :manufacturers
+      resources :engine_configs
+      resources :vehicle_stats do
+        collection do
+          post 'import_stat_file'
+          post 'import_stat_all_files'
+          get  'export'
+        end
+      end
+    end
+  end
+
+  root to: "home#index"
+end

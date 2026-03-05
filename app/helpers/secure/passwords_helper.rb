@@ -1,0 +1,2 @@
+module Secure::PasswordsHelper
+end

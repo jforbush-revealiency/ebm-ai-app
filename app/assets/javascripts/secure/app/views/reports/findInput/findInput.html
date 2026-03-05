@@ -1,0 +1,84 @@
+﻿<h1>
+  Find Inputs and Outputs 
+</h1>
+<div class="row top25">
+  <div class="col-xs-12">
+    <div class="row">
+      <div class="col-xs-4" ng-if="viewModel.isSiteAdmin">
+        <ui-select id="selectedCompany" name="selectedCompany" 
+                  ng-model="viewModel.selectedCompany"
+                  on-select="onCompanyChange($item, $model)" >
+          <ui-select-match placeholder="Select a company">
+            {{$select.selected.code}}
+          </ui-select-match>
+          <ui-select-choices repeat="row in (viewModel.allCompanies | filter: {code: $select.search})">
+            <div class="normal" style="width:20%;"ng-bind-html="row.code | highlight: $select.search"></div>
+          </ui-select-choices>
+        </ui-select>
+      </div>
+      <div class="col-xs-8">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search" ng-model-options="{debounce: 250}">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" ng-click="search()"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table st-pipe="customPipe" st-table="viewModel.allInputs" class="table table-striped top25" ng-if="viewModel.allInputs.length">
+  <thead>
+    <tr>
+      <th width="5%" st-sort="id">Id #</th>
+      <th width="10%" st-sort="company_code">Company</th>
+      <th width="10%" st-sort="location_code">Location</th>
+      <th width="10%" st-sort="vehicle_code">Vehicle #</th>
+      <th width="10%" st-sort="engine_code">Engine</th>
+      <th width="10%" st-sort="manufacturer_code">Manufacturer</th>
+      <th width="20%" st-sort="submitted">Submitted</th>
+      <th width="25%">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allInputs" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td class="text-right">
+          {{data.id}}
+      </td>
+      <td>
+          {{data.company_code}}
+      </td>
+      <td>
+          {{data.location_code}}
+      </td>
+      <td>
+          {{data.vehicle_code}}
+      </td>
+      <td>
+          {{data.engine_code}}
+      </td>
+      <td>
+          {{data.manufacturer_code}}
+      </td>
+      <td>
+          {{data.submitted | date : 'medium'}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-eye-open"></span>&nbsp;
+        <a ng-click="onInputView(data)">Input</a>&nbsp;
+        <a ng-click="onOutputView(data)">Results</a>&nbsp;&nbsp;
+        <button type="button" class="btn btn-danger btn-sm" ng-click="onDelete(data)">
+          <span class="glyphicon glyphicon-trash"></span>&nbsp;&nbsp;Delete
+        </button>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr ng-if="viewModel.allInputs.length">
+				<td colspan="8" class="text-center">
+          <div st-pagination="" st-page-change="onPageChange(newPage)" st-items-by-page="viewModel.limit" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

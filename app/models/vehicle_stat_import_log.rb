@@ -1,0 +1,2 @@
+class VehicleStatImportLog < ApplicationRecord
+end

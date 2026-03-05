@@ -1,0 +1,29 @@
+/**
+ * Controller for the application 
+ *
+ * Type: Controller
+ *
+ * ID: app
+ *
+ */
+//= depend_on_asset 'secure/app/layout/layout.html'
+(function () {
+  'use strict';
+
+  angular.module('app').controller('appController', [
+    '$scope',
+    'clientRootPath',
+    function($scope, clientRootPath) {
+      $scope.layoutUrl = getLayoutUrl;
+      $scope.$back = back;
+
+      function getLayoutUrl() {
+        return '<%= asset_path("secure/app/layout/layout.html") %>'
+      }
+
+      function back() {
+        window.history.back();
+      }
+    }
+  ]);
+})();

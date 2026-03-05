@@ -1,0 +1,125 @@
+<h1>
+  Engines 
+</h1>
+<div class="row top25">
+  <div class="col-xs-2">
+    <button class="btn btn-primary" ng-click="openForm()">Add new&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+  </div>
+  <div class="col-xs-10">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-xs-12">
+    <h2 ng-if="!viewModel.allData.length">
+      Data hasn't been added. Please add the first record.
+    </h2>
+  </div>
+</div>
+<div class="row top25" ng-show="viewModel.showForm">
+  <div class="col-md-6 col-md-offset-3">
+    <form name="form" ng-submit="save()" class="alert alert-warning" 
+      novalidate auto-display-required-asterisk>
+      <h3>{{viewModel.formTitle}}</h3>
+      <div class="form-group">
+        <label for="manufacturer">Manufacturer</label>
+        <ui-select id="manufacturer" name="selectedManufacturer" 
+                  ng-model="viewModel.selectedManufacturer" ng-required="form.$submitted">
+          <ui-select-match placeholder="Select a manufacturer">{{$select.selected.code}}</ui-select-match>
+          <ui-select-choices repeat="row in (viewModel.allManufacturers | filter: {code: $select.search})">
+            <span ng-bind-html="row.code | highlight: $select.search"></span>
+          </ui-select-choices>
+        </ui-select>
+        <div class="error-messages" ng-messages="form.selectedManufacturer.$error" role="alert">
+          <div ng-message="required">Please select a valid manufacturer</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="driveType">Drive Type</label>
+        <ui-select id="driveType" name="selectedDriveType" 
+                  ng-model="viewModel.selectedDriveType" ng-required="form.$submitted">
+          <ui-select-match placeholder="Select a drive type">{{$select.selected.code}}</ui-select-match>
+          <ui-select-choices repeat="row in (viewModel.allDriveTypes | filter: {code: $select.search})">
+            <span ng-bind-html="row.code | highlight: $select.search"></span>
+          </ui-select-choices>
+        </ui-select>
+        <div class="error-messages" ng-messages="form.selectedDriveType.$error" role="alert">
+          <div ng-message="required">Please select a valid drive type</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="code">Code</label>
+        <input type="text" class="form-control" id="code" placeholder="Code" 
+               name="code" ng-model="viewModel.code" ng-required="form.$submitted">
+        <div class="error-messages" ng-messages="form.code.$error" role="alert">
+          <div ng-message="required">Please enter a valid code</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" class="form-control" id="description" placeholder="Description" 
+               name="description" ng-model="viewModel.description">
+      </div>
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="is_single_stack" ng-model="viewModel.isSingleStack"> Is single stack? 
+            </label>
+          </div>
+        </div>
+      </div>
+      <hr/>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-default" ng-click="clear()">Close</button>
+        <button type="button" class="btn btn-danger pull-right" ng-click="remove(data)" ng-if="viewModel.selectedData">
+          Delete&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table st-table="viewModel.displayedData" st-safe-src="viewModel.allData" class="table table-striped top25" ng-if="viewModel.allData.length">
+  <thead>
+    <tr>
+      <th width="20%" st-sort="manufacturer_code">Manufacturer</th>
+      <th width="20%" st-sort="drive_type">Drive Type</th>
+      <th width="20%" st-sort="code">Code</th>
+      <th width="35%" st-sort="description">Description</th>
+      <th width="5%">&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allData | filter:viewModel.search" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td>
+          {{data.manufacturer_code}}
+      </td>
+      <td>
+          {{data.drive_type_code}}
+      </td>
+      <td>
+          {{data.code}}
+      </td>
+      <td>
+          {{data.description}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-edit" ></span>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+				<td colspan="5" class="text-center">
+          <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

@@ -1,0 +1,190 @@
+﻿<div class="row top25">
+  <div class="col-xs-12">
+    <a ng-click="back()" class="btn btn-primary"><span class="glyphicon glyphicon-chevron-left"></span>Back</a>
+  </div>
+</div>
+<div class="row" ng-if="viewModel.input_id">
+  <div ng-class="{'col-xs-8':viewModel.input.updated_by_email, 'col-xs-offset-2':viewModel.input.updated_by_email, 
+    'col-xs-6':!viewModel.input.updated_by_email, 'col-xs-offset-3':!viewModel.input.updated_by_email} ">
+    <h1>Input</h1>
+    <div class="form-horizontal top25">
+      <div class="row">
+        <div ng-class="{'col-md-6':viewModel.input.updated_by_email, 'col-md-12':!viewModel.input.updated_by_email}">
+          <div class="row">
+            <label class="col-md-4">Input #</label>
+            <div class="col-md-2 text-left">
+              {{viewModel.input.id}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Submitted On</label>
+            <div class="col-md-8">
+              {{viewModel.input.submitted | date : 'medium' }}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Submitted By</label>
+            <div class="col-md-8">
+              {{viewModel.input.submitter_first_name}}&nbsp;
+              {{viewModel.input.submitter_last_name}}
+              <a ng-href="mailto:{{viewModel.input.submitter_email}}">{{viewModel.input.submitter_email}}</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6" ng-if="viewModel.input.updated_by_email">
+          <div class="row">
+            <label class="col-md-4">Updated On</label>
+            <div class="col-md-8">
+              {{viewModel.input.updated_at | date : 'medium'}}
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-md-4">Updated By</label>
+            <div class="col-md-8">
+              {{viewModel.input.updated_by_first_name}}&nbsp;
+              {{viewModel.input.updated_by_first_name}}
+              <a ng-href="mailto:{{viewModel.input.updated_by_email}}">{{viewModel.input.updated_by_email}}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <hr/>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="col-md-4">Company</label>
+        <div class="col-md-8">
+          {{viewModel.input.company_code}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Location</label>
+        <div class="col-md-8">
+          {{viewModel.input.location_code}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Vehicle #</label>
+        <div class="col-md-8">
+          {{viewModel.input.vehicle_code}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Drive Type</label>
+        <div class="col-md-8">
+          {{viewModel.input.drive_type}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Single Stack</label>
+        <div class="col-md-8">
+          {{viewModel.input.is_single_stack === 'true' ? 'Yes' : 'No'}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Engine Hours</label>
+        <div class="col-md-2 text-right">
+          {{viewModel.input.engine_hours | number : 0}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Are there engine codes?</label>
+        <div class="col-md-8">
+          {{viewModel.input.has_engine_codes| true_false}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Does the engine have the latest configuration file?</label>
+        <div class="col-md-8">
+          {{viewModel.input.has_latest_configuration_file}}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <hr/>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="col-md-4">Engine RPM</label>
+        <div class="col-md-2 text-right">
+          {{viewModel.input.engine_rpm | number : 0}}
+        </div>
+      </div>
+      <div class="row" ng-if="viewModel.input.alternator_rpm">
+        <label class="col-md-4">Alternator RPM</label>
+        <div class="col-md-2 text-right">
+          {{viewModel.input.alternator_rpm | number : 0}}
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-4">Engine HP</label>
+        <div class="col-md-2 text-right">
+          {{viewModel.input.engine_hp | number : 0}}
+        </div>
+      </div>
+      <div class="row" ng-if="viewModel.input.alternator_hp">
+        <label class="col-md-4">Alternator HP</label>
+        <div class="col-md-2 text-right">
+          {{viewModel.input.alternator_hp | number : 0}}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <hr/>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-5">
+          <h3 ng-if="viewModel.input.is_single_stack === 'false'">Left Bank</h3>
+          <h3 ng-if="viewModel.input.is_single_stack !== 'false'">Bank</h3>
+        </div>
+        <div class="col-md-5" ng-if="viewModel.input.is_single_stack === 'false'">
+          <h3>Right Bank</h3>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="col-md-2">CO<sub>2</sub>%</label>
+        <div class="col-md-5 text-right">
+          {{viewModel.input.left_bank_co2_percent | number : 1}}%
+        </div>
+        <div class="col-md-5 text-right" ng-if="viewModel.input.is_single_stack === 'false'">
+          {{viewModel.input.right_bank_co2_percent | number : 1}}%
+        </div>
+      </div>
+      <div class="row">
+        <label class="col-md-2">CO</label>
+        <div class="col-md-5 text-right">
+          {{viewModel.input.left_bank_co | number : 0}}
+        </div>
+        <div class="col-md-5 text-right" ng-if="viewModel.input.is_single_stack === 'false'">
+          {{viewModel.input.right_bank_co | number : 0}}
+        </div>
+
+      </div>
+      <div class="row">
+        <label class="col-md-2">NO<sub>x</sub></label>
+        <div class="col-md-5 text-right">
+          {{viewModel.input.left_bank_nox | number : 0}}
+        </div>
+        <div class="col-md-5 text-right" ng-if="viewModel.input.is_single_stack === 'false'">
+          {{viewModel.input.right_bank_nox | number : 0}}
+        </div>
+      </div>
+
+      <div class="row top25 bottom25">
+        <div class="col-md-12 text-left">
+          <a ng-href="#/input/{{viewModel.input_id}}" class="btn btn-primary"><span class="glyphicon glyphicon-edit"></span>&nbsp;Edit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

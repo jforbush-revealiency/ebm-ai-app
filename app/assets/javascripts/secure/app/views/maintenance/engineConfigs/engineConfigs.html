@@ -1,0 +1,221 @@
+<h1>
+  Engine Configs
+</h1>
+<div class="row top25">
+  <div class="col-xs-2">
+    <button class="btn btn-primary" ng-click="openForm()">Add new&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+  </div>
+  <div class="col-xs-10">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="row" ng-if="!viewModel.allData.length">
+  <div class="col-xs-12">
+    <h2>
+      Data hasn't been added. Please add the first record.
+    </h2>
+  </div>
+</div>
+<div class="row top25" ng-show="viewModel.showForm">
+  <div class="col-md-6 col-md-offset-3">
+    <form name="form" ng-submit="save()" class="alert alert-warning" 
+      novalidate auto-display-required-asterisk>
+      <h3>{{viewModel.formTitle}}</h3>
+      <div class="form-group">
+        <label for="engine">Engine</label>
+        <ui-select id="engine" name="selectedEngine" 
+                  ng-model="viewModel.selectedEngine" ng-required="form.$submitted">
+          <ui-select-match placeholder="Select a engine">
+            {{$select.selected.manufacturer_code}}&nbsp;-&nbsp;{{$select.selected.code}}
+          </ui-select-match>
+          <ui-select-choices repeat="row in (viewModel.allEngines | filterOR: {code: $select.search, manufacturer_code: $select.search})">
+            <div class="manufacturer-code" ng-bind-html="row.manufacturer_code | highlight: $select.search"></div>
+            <div class="engine-code" ng-bind-html="row.code | highlight: $select.search"></div>
+          </ui-select-choices>
+        </ui-select>
+        <div class="error-messages" ng-messages="form.selectedEngine.$error" role="alert">
+          <div ng-message="required">Please select an valid engine</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="code">Code</label>
+        <input type="text" class="form-control" id="code" placeholder="Code" 
+               name="code" ng-model="viewModel.code" ng-required="form.$submitted">
+        <div class="error-messages" ng-messages="form.code.$error" role="alert">
+          <div ng-message="required">Please enter a valid code</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" class="form-control" id="description" placeholder="Description" 
+               name="description" ng-model="viewModel.description">
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="co2_percent">CO<sub>2</sub>%</label>
+            <input type="number" class="form-control" id="co2_percent" placeholder="CO2%" 
+                   name="co2_percent" ng-model="viewModel.co2_percent" ng-required="form.$submitted">
+            <div class="error-messages" ng-messages="form.co2_percent.$error" role="alert">
+              <div ng-message="required">Please enter a valid CO<sub>2</sub> percent</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="co">CO</label>
+            <input type="number" class="form-control" id="co" placeholder="CO" 
+                   name="co" ng-model="viewModel.co" ng-required="form.$submitted">
+            <div class="error-messages" ng-messages="form.co.$error" role="alert">
+              <div ng-message="required">Please enter a valid CO amount</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="nox">NO<sub>x</sub></label>
+            <input type="number" class="form-control" id="nox" placeholder="NOx" 
+                   name="nox" ng-model="viewModel.nox" ng-required="form.$submitted">
+            <div class="error-messages" ng-messages="form.nox.$error" role="alert">
+              <div ng-message="required">Please enter a valid NO<sub>x</sub> amount</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="co2PlusO2Percent">CO<sub>2</sub> + O<sub>2</sub>%</label>
+            <input type="number" class="form-control" id="nox" placeholder="CO2+O2%" 
+                   name="co2PlusO2Percent" ng-model="viewModel.co2PlusO2Percent">
+            <div class="error-messages" ng-messages="form.co2PlusO2Percent.$error" role="alert">
+              <div ng-message="required">Please enter a valid CO<sub>2</sub> + O<sub>2</sub>% amount</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="ratedRPM">Rated RPM</label>
+            <input type="number" class="form-control" id="ratedRPM" placeholder="Rated RPM" 
+                   name="ratedRPM" ng-model="viewModel.ratedRPM">
+            <div class="error-messages" ng-messages="form.ratedRPM.$error" role="alert">
+              <div ng-message="required">Please enter a valid Rated RPM amount</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="ratedHP">Rated HP</label>
+            <input type="number" class="form-control" id="ratedHP" placeholder="Rated HP" 
+                   name="ratedHP" ng-model="viewModel.ratedHP">
+            <div class="error-messages" ng-messages="form.ratedHP.$error" role="alert">
+              <div ng-message="required">Please enter a valid Rated HP amount</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="is_real_values" ng-model="viewModel.isRealValues"> Are the above values real? 
+            </label>
+          </div>
+        </div>
+      </div>
+      <hr/>
+      <h3>Telematically-Enabled Values</h3>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="testPercentLoad">Test Load %</label>
+            <input type="number" class="form-control" id="testPercentLoad" placeholder="Test Load %" 
+                   name="testPercentLoad" ng-max="999999" ng-model="viewModel.testPercentLoad">
+            <div class="error-messages" ng-messages="form.testPercentLoad.$error" role="alert">
+              <div ng-message="max">Load Percent cannot exceed 999,999.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="testRpm">Test RPM</label>
+            <input type="number" class="form-control" id="testRpm" placeholder="Test RPM" 
+                   name="testRpm" ng-max="999999" ng-model="viewModel.testRpm">
+            <div class="error-messages" ng-messages="form.testRpm.$error" role="alert">
+              <div ng-message="max">RPM cannot exceed 999,999.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="testBoostPsi">Test Boost PSI</label>
+            <input type="number" class="form-control" id="testBoostPsi" placeholder="Test Boost PSI" 
+                   name="testBoostPsi" ng-max="999999" ng-model="viewModel.testBoostPsi">
+            <div class="error-messages" ng-messages="form.testBoostPsi.$error" role="alert">
+              <div ng-message="max">Boost PSI cannot exceed 999,999.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="testFuelGallonsPerHour">Test Fuel Gallons/Hour</label>
+            <input type="number" class="form-control" id="testFuelGallonsPerHour" placeholder="Gallons/Hour" 
+                   name="testFuelGallonsPerHour" ng-max="999999" ng-model="viewModel.testFuelGallonsPerHour">
+            <div class="error-messages" ng-messages="form.testFuelGallonsPerHour.$error" role="alert">
+              <div ng-message="max">Test Fuel Gallons/Hour cannot exceed 999,999.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr/>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-default" ng-click="clear()">Close</button>
+        <button type="button" class="btn btn-danger pull-right" ng-click="remove(data)" ng-if="viewModel.selectedData">
+          Delete&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table st-table="viewModel.displayedData" st-safe-src="viewModel.allData" class="table table-striped top25" ng-if="viewModel.allData.length">
+  <thead>
+    <tr>
+      <th st-sort="manufacturer_code">Manufacturer</th>
+      <th st-sort="engine_code">Engine</th>
+      <th st-sort="code">Code</th>
+      <th st-sort="description">Description</th>
+      <th>&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allData | filter:viewModel.search" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td>
+          {{data.manufacturer_code}}
+      </td>
+      <td>
+          {{data.engine_code}}
+      </td>
+      <td>
+          {{data.code}}
+      </td>
+      <td>
+          {{data.description}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-edit" ></span>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+				<td colspan="5" class="text-center">
+          <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

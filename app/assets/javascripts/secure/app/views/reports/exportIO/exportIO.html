@@ -1,0 +1,59 @@
+﻿<h1>
+  Export Inputs and Outputs 
+</h1>
+<form name="form" ng-submit="exportData()" novalidate auto-display-required-asterisk>
+  <div class="row top25">
+    <div class="col-md-12">
+      <div class="row">
+        <div class="col-md-4" ng-if="viewModel.isSiteAdmin">
+          <label>Select a company</label>
+          <ui-select id="selectedCompany" name="selectedCompany" 
+                      ng-model="viewModel.selectedCompany">
+            <ui-select-match placeholder="Select a company">
+              {{$select.selected.code}}
+            </ui-select-match>
+            <ui-select-choices repeat="row in (viewModel.allCompanies | filter: {code: $select.search})">
+              <div class="normal" style="width:20%;"ng-bind-html="row.code | highlight: $select.search"></div>
+            </ui-select-choices>
+          </ui-select>
+        </div>
+        <div class="col-md-4">
+          <label>Choose a start date</label>
+          <p class="input-group">
+            <input type="text" class="form-control" name="startDate" uib-datepicker-popup="{{viewModel.dateFormat}}" 
+              ng-model="viewModel.startDate" is-open="viewModel.startDatePicker.opened" 
+              datepicker-options="viewModel.dateOptions" ng-required="form.$submitted" close-text="Close"
+              alt-input-formats="viewModel.altInputFormats" />
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default" ng-click="onStartDateClick()"><i class="glyphicon glyphicon-calendar"></i></button>
+            </span>
+            <div class="error-messages" ng-messages="form.startDate.$error" role="alert">
+              <div ng-message="required">Please choose a valid start date.</div>
+            </div>
+          </p>
+        </div>
+        <div class="col-md-4">
+          <label>Choose an end date</label>
+          <p class="input-group">
+            <input type="text" class="form-control" name="endDate" uib-datepicker-popup="{{viewModel.dateFormat}}" 
+              ng-model="viewModel.endDate" is-open="viewModel.endDatePicker.opened" 
+              datepicker-options="viewModel.dateOptions" ng-required="form.$submitted" close-text="Close"
+              alt-input-formats="viewModel.altInputFormats" />
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default" ng-click="onEndDateClick()"><i class="glyphicon glyphicon-calendar"></i></button>
+            </span>
+          </p>
+          <div class="error-messages" ng-messages="form.endDate.$error" role="alert">
+            <div ng-message="required">Please choose a valid end date.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row top25">
+    <div class="col-md-12">
+      <button type="submit" class="btn btn-primary">Export</button>
+    </div>
+  </div>
+</form>

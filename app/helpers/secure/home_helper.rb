@@ -1,0 +1,2 @@
+module Secure::HomeHelper
+end

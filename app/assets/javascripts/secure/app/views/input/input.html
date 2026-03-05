@@ -1,0 +1,238 @@
+﻿  <form name="form" ng-submit="save()" novalidate auto-display-required-asterisk>
+    <div class="row top25">
+      <div class="col-md-6 col-md-offset-3">
+        <h1>Input</h1>
+      </div>
+    </div>
+    <div class="row top25">
+      <div class="col-md-6 col-md-offset-3">
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="form-group">
+              <label for="selectedLocation">Company / Location</label>
+              <ui-select id="selectedLocation" name="selectedLocation" 
+                        ng-model="viewModel.selectedLocation" 
+                        ng-required="form.$submitted"
+                        on-select="onLocationChange($item, $model)"
+                        ng-disabled="viewModel.allLocations.length === 1">
+                <ui-select-match placeholder="Select a location">
+                  {{$select.selected.company_code}}
+                  {{$select.selected.code}}
+                </ui-select-match>
+                <ui-select-choices repeat="row in (viewModel.allLocations | filter: {code: $select.search})">
+                  <div class="row">
+                    <div class="bold col-xs-12 col-md-4" ng-bind-html="row.company_code | highlight: $select.search"></div>
+                    <div class="normal col-xs-12 col-md-8" ng-bind-html="row.code | highlight: $select.search"></div>
+                  </div>
+                </ui-select-choices>
+              </ui-select>
+              <div class="error-messages" ng-messages="form.selectedLocation.$error" role="alert">
+                <div ng-message="required">Please select a valid company / location.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="form-group">
+              <label for="selectedVehicle">Vehicle #</label>
+              <ui-select id="selectedVehicle" name="selectedVehicle" 
+                        ng-model="viewModel.selectedVehicle" 
+                        ng-required="form.$submitted"
+                        ng-disabled="!viewModel.selectedLocation"
+                        on-select="onVehicleChange($item, $model)">
+                <ui-select-match placeholder="Select a vehicle">
+                  {{$select.selected.manufacturer_code}}
+                  {{$select.selected.engine_code}}
+                  {{$select.selected.code}}
+                </ui-select-match>
+                <ui-select-choices repeat="row in (viewModel.allVehicles | filterOR: {code: $select.search, 
+                  manufacturer_code: $select.search, engine_code: $select.search})">
+                  <div class="row">
+                    <div class="normal col-xs-6 col-md-4" ng-bind-html="row.code | highlight: $select.search"></div>
+                  </div>
+                </ui-select-choices>
+              </ui-select>
+              <div class="error-messages" ng-messages="form.selectedLocation.$error" role="alert">
+                <div ng-message="required">Please select a valid vehicle.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="engine_hours">Engine Hours</label>
+              <input type="number" class="form-control" id="engine_hours" placeholder="Engine Hours" 
+                     name="engine_hours" ng-max="999999" ng-model="viewModel.engine_hours" ng-required="form.$submitted">
+              <div class="error-messages" ng-messages="form.engine_hours.$error" role="alert">
+                <div ng-message="required">Please enter a valid engine hours.</div>
+                <div ng-message="max">Engine hours cannot exceed 999,999.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="selectedHasEngineCodes">Are there engine codes?</label>
+              <ui-select id="selectedHasEngineCodes" name="selectedHasEngineCodes" 
+                        ng-model="viewModel.selectedHasEngineCodes" 
+                        on-select="onHasEngineCodesChange($item, $model)"
+                        ng-required="form.$submitted">
+                <ui-select-match placeholder="Select a yes or no">
+                  {{$select.selected.code}}
+                </ui-select-match>
+                <ui-select-choices repeat="row in (viewModel.allHasEngineCodes | filter: {code: $select.search})">
+                  <span ng-bind-html="row.code | highlight: $select.search"></span>
+                </ui-select-choices>
+              </ui-select>
+              <div class="error-messages" ng-messages="form.selectedHasEngineCodes.$error" role="alert">
+                <div ng-message="required">Please select a yes or no.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="selectedHasLatestConfigurationFile">Does the engine have the latest configuration file?</label>
+              <ui-select id="selectedHasLatestConfigurationFile" name="selectedHasLatestConfigurationFile" 
+                        ng-model="viewModel.selectedHasLatestConfigurationFile" 
+                        on-select="onHasLatestConfigurationFileChange($item, $model)"
+                        ng-required="form.$submitted">
+                <ui-select-match placeholder="Select Yes or No or N/A">
+                  {{$select.selected.code}}
+                </ui-select-match>
+                <ui-select-choices repeat="row in (viewModel.allHasLatestConfigurationFile | filter: {code: $select.search})">
+                  <span ng-bind-html="row.code | highlight: $select.search"></span>
+                </ui-select-choices>
+              </ui-select>
+              <div class="error-messages" ng-messages="form.selectedHasLatestConfigurationFile.$error" role="alert">
+                <div ng-message="required">Please select Yes or No or N/A.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div ng-if="viewModel.selectedVehicle && viewModel.selectedHasEngineCodes && !viewModel.selectedHasEngineCodes.value && viewModel.selectedHasLatestConfigurationFile && viewModel.selectedHasLatestConfigurationFile.value != 'No'">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="engine_rpm">Engine RPM</label>
+                <input type="number" class="form-control" id="engine_rpm" placeholder="Engine RPM" 
+                       name="engine_rpm" ng-model="viewModel.engine_rpm" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.engine_rpm.$error" role="alert">
+                  <div ng-message="required">Please enter engine RPMs.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="engine_hp">Engine HP</label>
+                <input type="number" class="form-control" id="engine_hp" placeholder="Engine HP" 
+                       name="engine_hp" ng-model="viewModel.engine_hp" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.engine_hp.$error" role="alert">
+                  <div ng-message="required">Please enter engine HPs.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <h3 ng-if="!viewModel.isSingleStack">
+                Left Bank
+              </h3>
+              <h3 ng-if="viewModel.isSingleStack">
+                Bank
+              </h3>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="left_bank_co2_percent">CO<sub>2</sub>%</label>
+                <input type="number" class="form-control" id="left_bank_co2_percent" placeholder="CO2%" 
+                       name="left_bank_co2_percent" ng-model="viewModel.left_bank_co2_percent" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.left_bank_co2_percent.$error" role="alert">
+                  <div ng-message="required">Please enter a valid CO<sub>2</sub> percent for the 
+                    <span ng-if="!viewModel.isSingleStack">left</span> bank.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="left_bank_co">CO</label>
+                <input type="number" class="form-control" id="left_bank_co" placeholder="CO" 
+                       name="left_bank_co" ng-model="viewModel.left_bank_co" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.left_bank_co.$error" role="alert">
+                  <div ng-message="required">Please enter a valid CO amount for the 
+                    <span ng-if="!viewModel.isSingleStack">left</span> bank.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="left_bank_nox">NO<sub>x</sub></label>
+                <input type="number" class="form-control" id="left_bank_nox" placeholder="NOx" 
+                       name="left_bank_nox" ng-model="viewModel.left_bank_nox" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.left_bank_nox.$error" role="alert">
+                  <div ng-message="required">Please enter a valid NO<sub>x</sub> amount for the 
+                    <span ng-if="!viewModel.isSingleStack">left</span> bank.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" ng-if="!viewModel.isSingleStack">
+            <div class="col-md-12">
+              <h3>Right Bank</h3>
+            </div>
+          </div>
+
+          <div class="row" ng-if="!viewModel.isSingleStack">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="right_bank_co2_percent">CO<sub>2</sub>%</label>
+                <input type="number" class="form-control" id="right_bank_co2_percent" placeholder="CO2%" 
+                       name="right_bank_co2_percent" ng-model="viewModel.right_bank_co2_percent" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.right_bank_co2_percent.$error" role="alert">
+                  <div ng-message="required">Please enter a valid CO<sub>2</sub> percent for the right bank.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="right_bank_co">CO</label>
+                <input type="number" class="form-control" id="right_bank_co" placeholder="CO" 
+                       name="right_bank_co" ng-model="viewModel.right_bank_co" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.right_bank_co.$error" role="alert">
+                  <div ng-message="required">Please enter a valid CO amount for the right bank.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="left_bank_nox">NO<sub>x</sub></label>
+                <input type="number" class="form-control" id="right_bank_nox" placeholder="NOx" 
+                       name="right_bank_nox" ng-model="viewModel.right_bank_nox" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.right_bank_nox.$error" role="alert">
+                  <div ng-message="required">Please enter a valid NO<sub>x</sub> amount for the right bank.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <button type="submit" class="btn btn-primary">
+              <span ng-if="viewModel.input_id">Save and Reprocess</span>
+              <span ng-if="!viewModel.input_id">Send</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+

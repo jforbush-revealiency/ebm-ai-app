@@ -1,0 +1,82 @@
+<h1>
+  Drive Types
+</h1>
+<div class="row top25">
+  <div class="col-xs-2">
+    <button class="btn btn-primary" ng-click="openForm()">Add new&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+  </div>
+  <div class="col-xs-10">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-xs-12">
+    <h2 ng-if="!viewModel.allData.length">
+      Data hasn't been added. Please add the first record.
+    </h2>
+  </div>
+</div>
+<div class="row top25" ng-show="viewModel.showForm">
+  <div class="col-md-6 col-md-offset-3">
+    <form name="form" ng-submit="save()" class="alert alert-warning" 
+      novalidate auto-display-required-asterisk>
+      <h3>{{viewModel.formTitle}}</h3>
+      <div class="form-group">
+        <label for="code">Code</label>
+        <input type="text" class="form-control" id="code" placeholder="Code" 
+               name="code" ng-model="viewModel.code" ng-required="form.$submitted">
+        <div class="error-messages" ng-messages="form.code.$error" role="alert">
+          <div ng-message="required">Please enter a valid code</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" class="form-control" id="description" placeholder="Description" 
+               name="description" ng-model="viewModel.description">
+      </div>
+      <hr/>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-default" ng-click="clear()">Close</button>
+        <button type="button" class="btn btn-danger pull-right" ng-click="remove(data)" ng-if="viewModel.selectedData">
+          Delete&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table st-table="viewModel.displayedData" st-safe-src="viewModel.allData" class="table table-striped top25" ng-if="viewModel.allData.length">
+  <thead>
+    <tr>
+      <th st-sort="code">Code</th>
+      <th st-sort="description">Description</th>
+      <th>&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allData | filter:viewModel.search" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td>
+          {{data.code}}
+      </td>
+      <td>
+          {{data.description}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-edit" ></span>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+				<td colspan="3" class="text-center">
+          <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

@@ -1,0 +1,143 @@
+<h1>
+  Companies 
+</h1>
+<div class="row top25">
+  <div class="col-xs-2">
+    <button type="button" class="btn btn-primary" ng-click="openForm()">Add new&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+  </div>
+  <div class="col-xs-10">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search for..." ng-model="viewModel.search">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-xs-12">
+    <h2 ng-if="!viewModel.allData.length">
+      Data hasn't been added. Please add the first record.
+    </h2>
+  </div>
+</div>
+<div class="row top25" ng-show="viewModel.showForm">
+  <div class="col-md-6 col-md-offset-3">
+    <form name="form" ng-submit="save()" class="alert alert-warning" 
+      novalidate auto-display-required-asterisk>
+      <h3>{{viewModel.formTitle}}</h3>
+      <div class="form-group">
+        <label for="code">Company Code</label>
+        <input type="text" class="form-control" id="code" placeholder="Code" 
+               name="code" ng-model="viewModel.code" ng-required="form.$submitted">
+        <div class="error-messages" ng-messages="form.code.$error" role="alert">
+          <div ng-message="required">Please enter a valid company code</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" class="form-control" id="description" placeholder="Description" 
+               name="description" ng-model="viewModel.description">
+      </div>
+      <div class="form-group">
+        <label for="averageDieselFuel">Average Diesel Fuel</label>
+        <input type="number" class="form-control" id="averageDieselFuel" placeholder="Average Diesel Fuel" 
+               name="averageDieselFuel" ng-max="999999" ng-model="viewModel.averageDieselFuel">
+        <div class="error-messages" ng-messages="form.averageDieselFuel.$error" role="alert">
+          <div ng-message="max">Average Diesel Fuel cannot exceed 999,999.</div>
+        </div>
+      </div>
+      <div>
+        <hr/>
+        <h4>Location</h4>
+        <div class="row top10">
+          <div class="col-xs-2">
+            <button type="button" class="btn btn-primary" ng-click="openLocationForm()" ng-show="viewModel.selectedData">
+              Add new location&nbsp;&nbsp;<span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+          </div>
+        </div>
+        <div class="row top10" ng-if="viewModel.showLocationForm || !viewModel.selectedData">
+          <div class="col-md-12">
+            <div>
+              <h4>{{viewModel.formLocationTitle}}</h4>
+              <div class="form-group">
+                <label for="locationCode">Location Code</label>
+                <input type="text" class="form-control" id="locationCode" placeholder="Location code" 
+                       name="locationCode" ng-model="viewModel.locationCode" ng-required="form.$submitted">
+                <div class="error-messages" ng-messages="form.locationCode.$error" role="alert">
+                  <div ng-message="required">Please enter a valid location code</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="locationDescription">Description</label>
+                <input type="text" class="form-control" id="locationDescription" placeholder="Location description" 
+                       name="locationDescription" ng-model="viewModel.locationDescription">
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="locationAttainment" ng-model="viewModel.locationAttainment"> Attainment 
+                </label>
+              </div>
+              <hr ng-show="viewModel.selectedData" />
+              <div class="form-group" ng-show="viewModel.selectedData">
+                <button ng-click="viewModel.saveLocationClicked=true" class="btn btn-primary btn-sm">Save location</button>
+                <button type="button" class="btn btn-default btn-sm" ng-click="clearLocation()">Close</button>
+                <button type="button" class="btn btn-danger pull-right btn-sm" ng-click="removeLocation(data)" ng-if="viewModel.selectedData && viewModel.allLocations.length > 1">
+                  Delete location&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <table class="table table-striped table-condensed top10" ng-show="viewModel.selectedData">
+          <tr>
+            <th>Code</th>
+            <th>Attainment</th>
+          </tr>
+          <tr ng-repeat="location in viewModel.allLocations" selection-model selection-model-on-change='onLocationDataSelected(location)'>
+            <td>{{location.code}}</td>
+            <td>{{location.attainment | true_false}}</td>
+          </tr>
+        </table>
+      </div>
+      <hr/>
+      <div class="form-group" ng-show="!viewModel.selectedLocationData && !viewModel.showLocationForm">
+        <button type="submit" ng-click="viewModel.saveLocationClicked=false" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-default" ng-click="clear()">Close</button>
+        <button type="button" class="btn btn-danger pull-right" ng-click="remove(data)" ng-if="viewModel.selectedData">
+          Delete&nbsp;&nbsp;<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table st-table="viewModel.displayedData" st-safe-src="viewModel.allData" class="table table-striped top25" ng-if="viewModel.allData.length">
+  <thead>
+    <tr>
+      <th width="20%" st-sort="code">Code</th>
+      <th width="75%" st-sort="description">Description</th>
+      <th width="5%">&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in viewModel.allData | filter:viewModel.search" selection-model selection-model-on-change='onDataSelected(data)'>
+      <td>
+          {{data.code}}
+      </td>
+      <td>
+          {{data.description}}
+      </td>
+      <td>
+        <span class="glyphicon glyphicon-edit" ></span>
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+				<td colspan="5" class="text-center">
+          <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+				</td>
+			</tr>
+  </tfoot>
+</table>

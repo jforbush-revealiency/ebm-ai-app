@@ -1,0 +1,57 @@
+﻿/** 
+ * Message Box
+ * 
+ * Type: Service
+ * 
+ * ID: messageBoxService
+ * 
+ */
+//= depend_on_asset 'secure/app/components/messageBox/messageBox.html'
+(function () {
+    'use strict';
+
+    angular.module('messageBox').factory('messageBoxService',
+        [
+            '$uibModal',
+            'clientRootPath',
+            function ($uibModal, clientRootPath) {
+
+                var buttonResults = {
+                    button1: 1,
+                    button2: 2
+                };
+
+                //----------------------------------------------
+                // show
+                //----------------------------------------------
+                function show(size, title, message, button1Text, button2Text) {
+                    return $uibModal.open({
+                        templateUrl: '<%= asset_path("secure/app/components/messageBox/messageBox.html") %>',
+                        controller: 'messageBoxController',
+                        size: size,
+                        backdrop: 'static',
+                        resolve: {
+                            // Add items to pass to the controller here.
+                            title: function() {
+                                return title;
+                            },
+                            message: function() {
+                                return message;
+                            },
+                            button1Text: function() {
+                                return button1Text;
+                            },
+                            button2Text: function() {
+                                return button2Text;
+                            }
+                        }
+                    });
+                }
+
+                return {
+                    buttonResults: buttonResults,
+                    show: show
+                };
+            }
+        ]);
+})();

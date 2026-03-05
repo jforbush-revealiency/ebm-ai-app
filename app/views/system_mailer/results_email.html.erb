@@ -1,0 +1,248 @@
+<% content_for :header do %>
+  <table width="100%">
+    <tr>
+      <td colspan="3"><%= image_tag attachments['ebmpro-logo.png'].url %></td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Input #</strong><br/>
+        <%= @output.input.id %>
+      </td>
+      <td>
+        <strong>Company</strong><br/>
+        <%= @output.company_code %>
+      </td>
+      <td>
+        <strong>Location</strong><br/>
+        <%= @output.location_code %>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">&nbsp;</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Vehicle #</strong><br/>
+        <%= @output.vehicle_code %>
+      </td>
+      <td>
+        <strong>Engine Model</strong><br/>
+        <%= @output.engine_code %>
+      </td>
+      <td>
+        <strong>Engine Hours</strong><br/>
+        <%= number_with_delimiter(number_with_precision(@output.engine_hours, precision: 0)) %>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <strong>Single Stack</strong><br/>
+        <%- if @output.is_single_stack == "true"%>
+          Yes
+        <% else %>
+          No
+        <% end -%>
+      </td>
+    </tr>
+  </table>
+<% end %>
+
+<% content_for :left do %>
+  <table width="100%">
+    <tr>
+      <td><strong>Engine Hours</strong></td>
+      <td class="" style="<%=@output.email_style_code('engine_hours_code') %>"><%= @output.engine_hours_message %></td>
+    </tr>
+
+    <tr>
+      <td>
+        <strong>Engine<%- if @output.drive_type == "Electric" %> / Alternator<% end -%> RPM</strong>
+        <% if @output.drive_type != "Electric" %>- <%=@output.engine_rpm.to_i%><% end %>
+      </td>
+      <td class="" style="<%=@output.email_style_code('engine_alternator_rpm_code') %>"><%= @output.engine_alternator_rpm_message %></td>
+    </tr>
+    <%- if @output.drive_type == "Electric" %>
+      <tr>
+        <td colspan="2"><%=@output.engine_rpm.to_i %> / <%=@output.alternator_rpm.to_i %></td>
+      </tr>
+    <% end -%>
+
+    <tr>
+      <td>
+        <strong>Engine<%- if @output.drive_type == "Electric" %> / Alternator<% end -%> HP</strong>
+        <% if @output.drive_type != "Electric" %>- <%=@output.engine_hp.to_i%><% end %>
+      </td>
+      <td class="" style="<%=@output.email_style_code('engine_alternator_hp_code') %>" ><%= @output.engine_alternator_hp_message %></td>
+    </tr>
+    <%- if @output.drive_type == "Electric" %>
+      <tr>
+        <td colspan="2"><%=@output.engine_hp.to_i %> / <%=@output.alternator_hp.to_i %></td>
+      </tr>
+    <% end -%>
+
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+
+    <%- unless @output.is_single_stack == "true"%>
+      <tr>
+        <td colspan="2"><strong>Bank Balance Check</strong></td>
+      </tr>
+
+      <tr>
+        <td>CO<sub>2</sub>%</td>
+        <td class="" style="<%=@output.email_style_code('bank_balance_check_co2_percent_code') %>" ><%= @output.bank_balance_check_co2_percent_message %></td>
+      </tr>
+
+      <tr>
+        <td>CO</td>
+        <td class="" style="<%=@output.email_style_code('bank_balance_check_co_code') %>" ><%= @output.bank_balance_check_co_message %></td>
+      </tr>
+
+      <tr>
+        <td>NO<sub>x</sub></td>
+        <td class="" style="<%=@output.email_style_code('bank_balance_check_nox_code') %>" ><%= @output.bank_balance_check_nox_message %></td>
+      </tr>
+
+      <tr>
+        <td colspan="2">&nbsp;</td>
+      </tr>
+    <% end -%>
+
+    <tr>
+      <td colspan="2"><strong>CO<sub>2</sub>%</strong></td>
+    </tr>
+
+    <%- unless @output.is_single_stack == "true"%>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th width="45%">Left Bank<span style="font-weight: normal"> - <%= @output.left_bank_co2_percent %>%</span></th>
+              <th width="5%">&nbsp;</th>
+              <th width="45%">Right Bank<span style="font-weight: normal"> - <%= @output.right_bank_co2_percent %>%</span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('co2_percent_left_bank_code') %>">
+                <%= simple_format(@output.co2_percent_left_bank_message) %>
+              </td>
+              <td>&nbsp;</td>
+              <td class="" style="<%=@output.email_style_code('co2_percent_right_bank_code') %>">
+                <%= simple_format(@output.co2_percent_right_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% else %>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th>Bank<span style="font-weight: normal"> - <%= @output.left_bank_co2_percent %>%</span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('co2_percent_left_bank_code') %>">
+                <%= simple_format(@output.co2_percent_left_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% end -%>
+
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2"><strong>CO</strong></td>
+    </tr>
+
+    <%- unless @output.is_single_stack == "true"%>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th width="45%">Left Bank<span style="font-weight: normal"> - <%= @output.left_bank_co.to_i %></span></th>
+              <th width="5%">&nbsp;</th>
+              <th width="45%">Right Bank<span style="font-weight: normal"> - <%= @output.right_bank_co.to_i %></span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('co_left_bank_code') %>">
+                <%= simple_format(@output.co_left_bank_message) %>
+              </td>
+              <td>&nbsp;</td>
+              <td class="" style="<%=@output.email_style_code('co_right_bank_code') %>">
+                <%= simple_format(@output.co_right_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% else %>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th>Bank<span style="font-weight: normal"> - <%= @output.left_bank_co.to_i %></span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('co_left_bank_code') %>">
+                <%= simple_format(@output.co_left_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% end -%>
+
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2"><strong>No<sub>x</sub></strong></td>
+    </tr>
+
+    <%- unless @output.is_single_stack == "true"%>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th width="45%">Left Bank<span style="font-weight: normal"> - <%= @output.left_bank_nox.to_i %></span></th>
+              <th width="5%">&nbsp;</th>
+              <th width="45%">Right Bank<span style="font-weight: normal"> - <%= @output.right_bank_nox.to_i %></span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('nox_left_bank_code') %>">
+                <%= simple_format(@output.nox_left_bank_message) %>
+              </td>
+              <td>&nbsp;</td>
+              <td class="" style="<%=@output.email_style_code('nox_right_bank_code') %>">
+                <%= simple_format(@output.nox_right_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% else %>
+      <tr>
+        <td colspan="2">
+          <table width="100%">
+            <tr>
+              <th>Bank<span style="font-weight: normal"> - <%= @output.left_bank_nox.to_i %></span></th>
+            </tr>
+            <tr>
+              <td class="" style="<%=@output.email_style_code('nox_left_bank_code') %>">
+                <%= simple_format(@output.nox_left_bank_message) %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    <% end -%>
+  </table>
+<% end %>
+

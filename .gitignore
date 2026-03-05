@@ -1,0 +1,49 @@
+# ============================================================
+# CREDENTIALS & SECRETS — NEVER COMMIT THESE
+# ============================================================
+.env
+.env.*
+!.env.example
+config/aws.json
+config/secrets.yml
+config/master.key
+config/credentials.yml.enc
+
+# FTP / SSH keys
+*.pem
+*.key
+ftpserver/ftp-user.csv
+ftpserver/root-user.csv
+
+# Database dumps
+*.sql
+scripts/dump.sql
+public/temeda.csv
+
+# ============================================================
+# RUBY / RAILS
+# ============================================================
+*.rbc
+/log/*
+!/log/.keep
+/tmp
+/vendor/bundle
+.byebug_history
+/.bundle
+config/initializers/secret_token.rb
+/db/*.sqlite3
+
+# ============================================================
+# NODE
+# ============================================================
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ============================================================
+# SYSTEM
+# ============================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

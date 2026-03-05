@@ -1,0 +1,22 @@
+# EBM AI App — PostgreSQL Configuration
+# Credentials come from environment variables — never hardcode here.
+# Copy .env.example to .env and fill in your values.
+
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: ebmpro_development
+  # Or use: url: <%= ENV['DATABASE_URL'] %>
+
+test:
+  <<: *default
+  database: ebmpro_test
+
+production:
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>

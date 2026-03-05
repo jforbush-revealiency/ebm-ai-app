@@ -1,0 +1,43 @@
+The FTP server can be found at - ec2-34-210-239-231.us-west-2.compute.amazonaws.com
+The private key to access this server can be found at - ebmpro/ftpserver/key.pem
+To SSH to the server do the following: ssh -i "EBMPros-FTP.pem" ec2-user@ec2-34-210-239-231.us-west-2.compute.amazonaws.com
+
+I installed the following packages based on the instructions found at - https://github.com/s3fs-fuse/s3fs-fuse for CentOS 7
+
+sudo yum install automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel make openssl-devel
+git clone https://github.com/s3fs-fuse/s3fs-fuse.git
+cd s3fs-fuse
+./autogen.sh
+./configure
+make
+sudo make install
+
+
+The AWS access key I used was the root user.
+echo AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY > ~/.passwd-s3fs
+chmod 600 ~/.passwd-s3fs
+
+mkdir -p /home/ftp/s3bucket
+sudo chmod 777 /home/ftp/s3bucket
+
+edit /etc/fuse.conf and uncomment out the line that says user_allow_other
+
+I created a new S3 bucket with the name of ebmpros-ftp and gave permissions to the root user
+s3fs ebmpros-ftp /home/ftp/s3bucket/ -o passwd_file=~/.passwd-s3fs -o allow_other
+
+change into the ~/s3bucket directory and add a file and make sure it ends up in the s3 bucket
+
+sudo yum install vsftpd
+sudo vim /etc/vsftpd/vsftpd.conf
+
+sudo useradd -M -s /sbin/nologin ftpuser
+sudo usermod -d /home/ftp/s3bucket/ ftpuser
+sudo passwd ftpuser
+
+TROUBLESHOOTING
+=================
+You might have to also run the command below in order to re-establish the connection to S3.
+In that event you have to copy the files to a different directory, re-establish the connection
+and then copy the files back.  Before copying them back make sure the owner and group is set to ftpuser.
+To re-establish the connection use the following command:
+s3fs ebmpros-ftp /home/ftp/s3bucket/ -o passwd_file=~/.passwd-s3fs -o allow_other
