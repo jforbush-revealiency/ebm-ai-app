@@ -1,10 +1,12 @@
-class AddAdminUser < ActiveRecord::Migration[5.0]
+class AddAdminUser < ActiveRecord::Migration[7.1]
   def up
-    User.create!({email: "j4bushcpa@gmail.com", 
-                  first_name: "Jeramiah", last_name: "Forbush",
-                  role: "site_admin", password: "11111111", password_confirmation: "11111111" })
+    return if User.exists?(role: "site_admin")
+    u = User.new(email: "admin@ebmpros.com", first_name: "Admin",
+                 last_name: "User", role: "site_admin",
+                 password: "changeme123", password_confirmation: "changeme123")
+    u.save(validate: false)
   end
   def down
-    User.delete_all
+    User.where(role: "site_admin").delete_all
   end
 end
