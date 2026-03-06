@@ -7,7 +7,6 @@ bundle install
 
 bundle exec rails db:migrate
 
-# Run seed only if TelematicsConfig table is empty
 bundle exec rails runner "
   if TelematicsConfig.count == 0
     puts 'Running seed...'
@@ -17,7 +16,6 @@ bundle exec rails runner "
   end
 "
 
-# Update thresholds to match actual Redmond HT4 data
 bundle exec rails runner "
   v = Vehicle.find_by(code: 'redmond_ht4')
   c = TelematicsConfig.find_by(vehicle: v)
@@ -25,8 +23,8 @@ bundle exec rails runner "
   puts 'Thresholds updated'
 "
 
-echo "=== Files in tmp/import ==="
-ls -la /opt/render/project/src/tmp/import/ || echo "Directory not found"
+echo '=== Files in tmp/import ==='
+ls -la /opt/render/project/src/tmp/import/ || echo 'Directory not found'
 
 STAT_COUNT=$(bundle exec rails runner "puts VehicleStat.count" 2>/dev/null | tail -1)
 if [ "$STAT_COUNT" = "0" ]; then
@@ -44,13 +42,10 @@ else
   echo "Valid emission tests already exist ($TEST_COUNT) — skipping"
 fi
 
-REPORT_COUNT=$(bundle exec rails runner "
-  v = Vehicle.find_by(code: 'redmond_ht4')
-  puts v ? Input.where(vehicle: v, auto_generated: true).count : 0
-" 2>/dev/null | tail -1)
+REPORT_COUNT=$(bundle exec rails runner "v = Vehicle.find_by(code: 'redmond_ht4'); puts v ? Input.where(vehicle: v, auto_generated: true).count : 0" 2>/dev/null | tail -1)
 if [ "$REPORT_COUNT" = "0" ]; then
   echo "Generating daily reports..."
   bundle exec rake telematics:generate_daily_reports VEHICLE=redmond_ht4
 else
-  echo "Daily reports already exist ($REPORT_COUNT) — skipping"
+  echo "Redmond HT4 daily reports already exist ($REPORT_COUNT) — skipping"
 fi
