@@ -2,12 +2,14 @@ module Api
   class VehiclesController < BaseController
     def index
       vehicles = Vehicle.all.map do |v|
+        test_count = ValidEmissionTest.joins(:vehicle_stat)
+                                      .where(vehicle_stats: { vehicle_id: v.id })
+                                      .count
         {
           id: v.id,
           code: v.code,
           name: v.name,
-          emission_test_count: v.valid_emission_tests.count,
-          last_test_at: v.valid_emission_tests.order(:recorded_at).last&.recorded_at
+          emission_test_count: test_count
         }
       end
       render json: vehicles
@@ -15,14 +17,17 @@ module Api
 
     def emission_tests
       vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
-      tests = vehicle.valid_emission_tests.order(:recorded_at).map do |t|
+      tests = ValidEmissionTest.joins(:vehicle_stat)
+                               .where(vehicle_stats: { vehicle_id: vehicle.id })
+                               .order(:datetime)
+                               .map do |t|
         {
           id: t.id,
-          recorded_at: t.recorded_at,
-          avg_nox_ppm: t.avg_nox_ppm.round(2),
-          avg_co2_percent: t.avg_co2_percent.round(2),
-          avg_rpm: t.avg_rpm.round(0),
-          avg_load_percent: t.avg_load_percent.round(1)
+          recorded_at: t.datetime,
+          nox_ppm: t.nox_ppm&.round(2),
+          co2_percent: t.co2_percent&.round(2),
+          rpm: t.rpm,
+          percent_load: t.percent_load
         }
       end
       render json: { vehicle: vehicle.code, tests: tests }
@@ -33,14 +38,16 @@ module Api
     def daily_reports
       vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
       reports = Input.where(vehicle: vehicle, auto_generated: true)
-                     .order(:created_at)
+                     .order(:submitted)
                      .map do |r|
+        avg_nox = [r.left_bank_nox, r.right_bank_nox].compact
+        avg_co2 = [r.left_bank_co2_percent, r.right_bank_co2_percent].compact
         {
           id: r.id,
-          date: r.created_at.to_date,
-          avg_nox_ppm: r.avg_nox_ppm&.round(2),
-          avg_co2_percent: r.avg_co2_percent&.round(2),
-          avg_rpm: r.avg_rpm&.round(0),
+          date: r.submitted&.to_date,
+          avg_nox_ppm: avg_nox.any? ? (avg_nox.sum / avg_nox.size).round(2) : nil,
+          avg_co2_percent: avg_co2.any? ? (avg_co2.sum / avg_co2.size).round(2) : nil,
+          avg_rpm: r.engine_rpm&.round(0),
           engine_hours: r.engine_hours
         }
       end
