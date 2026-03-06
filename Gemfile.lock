@@ -1,2 +1,6 @@
+PLATFORMS
+  arm64-darwin
+  x86_64-linux
+
 BUNDLED WITH
    2.5.23
