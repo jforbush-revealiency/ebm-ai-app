@@ -1,6 +1,15 @@
 require 'public_api_constraints'
 
 Rails.application.routes.draw do
+namespace :api do
+    resources :vehicles, only: [:index] do
+      member do
+        get :emission_tests
+        get :daily_reports
+      end
+    end
+  end
+
   devise_for :users,
     skip: [:registrations],
     path_names: { sign_in: 'login', sign_out: 'logout' },
