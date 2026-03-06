@@ -132,7 +132,6 @@ namespace :telematics do
       stats_array      = stats.to_a
       i                = 0
       fail_load_rpm    = 0
-      fail_timespan    = 0
       fail_consistency = 0
       fail_frequency   = 0
 
@@ -146,14 +145,6 @@ namespace :telematics do
 
         unless all_qualify
           fail_load_rpm += 1
-          i += 1
-          next
-        end
-
-        expected_span = (config.sample_count - 1) * config.sample_interval_seconds
-        actual_span   = (window.last.datetime - window.first.datetime).to_f * 86400
-        unless (actual_span - expected_span).abs < (config.sample_interval_seconds * 5.0)
-          fail_timespan += 1
           i += 1
           next
         end
@@ -204,7 +195,7 @@ namespace :telematics do
         end
       end
 
-      puts "  Rejected — load/rpm: #{fail_load_rpm}  timespan: #{fail_timespan}  consistency: #{fail_consistency}  frequency: #{fail_frequency}"
+      puts "  Rejected — load/rpm: #{fail_load_rpm}  consistency: #{fail_consistency}  frequency: #{fail_frequency}"
       puts "  Created #{tests_created} valid emission tests"
     end
 
@@ -290,7 +281,7 @@ namespace :telematics do
 
             begin
               Output.process_input(input)
-              puts "  #{date}: #{count} tests averaged → daily report Input ##{input.id}"
+              puts "  #{date}: #{count} tests averaged => daily report Input ##{input.id}"
               reports_created += 1
             rescue => e
               puts "  #{date}: Input ##{input.id} saved, output failed — #{e.message}"
@@ -307,7 +298,7 @@ namespace :telematics do
     puts "Created: #{reports_created}  |  Skipped: #{reports_skipped}"
   end
 
-  desc "Run full pipeline: import_stats → process_iso8178 → generate_daily_reports"
+  desc "Run full pipeline: import_stats => process_iso8178 => generate_daily_reports"
   task run_pipeline: [:import_stats, :process_iso8178, :generate_daily_reports] do
     puts "\n=== Full Telematics Pipeline Complete ==="
   end
