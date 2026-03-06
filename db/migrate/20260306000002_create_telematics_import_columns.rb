@@ -3,10 +3,10 @@ class CreateTelematicsImportColumns < ActiveRecord::Migration[7.1]
     create_table :telematics_configs do |t|
       t.integer  :vehicle_id,                  null: true
       t.integer  :location_id,                 null: false
-      t.decimal  :min_load_percent,            precision: 8, scale: 2, default: 70.0,  null: false
+      t.decimal  :min_load_percent,            precision: 8, scale: 2, default: 70.0,   null: false
       t.decimal  :min_rpm,                     precision: 8, scale: 2, default: 1400.0, null: false
-      t.decimal  :consistency_threshold_pct,   precision: 8, scale: 2, default: 15.0,  null: false
-      t.decimal  :test_frequency_hours,        precision: 6, scale: 2, default: 4.0,   null: false
+      t.decimal  :consistency_threshold_pct,   precision: 8, scale: 2, default: 15.0,   null: false
+      t.decimal  :test_frequency_hours,        precision: 6, scale: 2, default: 4.0,    null: false
       t.integer  :daily_report_hour,           default: 23,  null: false
       t.integer  :sample_count,                default: 3,   null: false
       t.integer  :sample_interval_seconds,     default: 10,  null: false
@@ -28,16 +28,17 @@ class CreateTelematicsImportColumns < ActiveRecord::Migration[7.1]
     add_index :telematics_import_columns,  :vehicle_id
     add_index :telematics_import_columns,  :location_id
 
-    add_column :vehicle_stats, :filter_oil_pressure,  :decimal, precision: 10, scale: 4
-    add_column :vehicle_stats, :fuel_rate,             :decimal, precision: 10, scale: 4
-    add_column :vehicle_stats, :lifetime_idle_hours,   :decimal, precision: 12, scale: 2
-    add_column :vehicle_stats, :lifetime_idle_fuel,    :decimal, precision: 12, scale: 4
-    add_column :vehicle_stats, :oil_condition,         :decimal, precision: 8,  scale: 4
-    add_column :vehicle_stats, :heater_voltage,        :decimal, precision: 8,  scale: 4
-    add_column :vehicle_stats, :heater_current,        :decimal, precision: 8,  scale: 4
-    add_column :vehicle_stats, :hydrocarbons,          :decimal, precision: 10, scale: 4
-    add_column :vehicle_stats, :smoke_setting,         :decimal, precision: 8,  scale: 4
-    add_column :vehicle_stats, :datetime,              :datetime
-    add_column :vehicle_stats, :filename,              :string
+    # Add columns safely — skip if already exists from a previous migration
+    add_column :vehicle_stats, :filter_oil_pressure,  :decimal, precision: 10, scale: 4 unless column_exists?(:vehicle_stats, :filter_oil_pressure)
+    add_column :vehicle_stats, :fuel_rate,             :decimal, precision: 10, scale: 4 unless column_exists?(:vehicle_stats, :fuel_rate)
+    add_column :vehicle_stats, :lifetime_idle_hours,   :decimal, precision: 12, scale: 2 unless column_exists?(:vehicle_stats, :lifetime_idle_hours)
+    add_column :vehicle_stats, :lifetime_idle_fuel,    :decimal, precision: 12, scale: 4 unless column_exists?(:vehicle_stats, :lifetime_idle_fuel)
+    add_column :vehicle_stats, :oil_condition,         :decimal, precision: 8,  scale: 4 unless column_exists?(:vehicle_stats, :oil_condition)
+    add_column :vehicle_stats, :heater_voltage,        :decimal, precision: 8,  scale: 4 unless column_exists?(:vehicle_stats, :heater_voltage)
+    add_column :vehicle_stats, :heater_current,        :decimal, precision: 8,  scale: 4 unless column_exists?(:vehicle_stats, :heater_current)
+    add_column :vehicle_stats, :hydrocarbons,          :decimal, precision: 10, scale: 4 unless column_exists?(:vehicle_stats, :hydrocarbons)
+    add_column :vehicle_stats, :smoke_setting,         :decimal, precision: 8,  scale: 4 unless column_exists?(:vehicle_stats, :smoke_setting)
+    add_column :vehicle_stats, :datetime,              :datetime                          unless column_exists?(:vehicle_stats, :datetime)
+    add_column :vehicle_stats, :filename,              :string                            unless column_exists?(:vehicle_stats, :filename)
   end
 end
