@@ -32,18 +32,8 @@ bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import
 echo "Importing Oct 2017 stats..."
 bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import/redmond_ht4_oct2017.csv VEHICLE=redmond_ht4
 
-TEST_COUNT=$(bundle exec rails runner "puts ValidEmissionTest.count" 2>/dev/null | tail -1)
-if [ "$TEST_COUNT" = "0" ]; then
-  echo "Processing ISO 8178 windows..."
-  bundle exec rake telematics:process_iso8178 VEHICLE=redmond_ht4
-else
-  echo "Valid emission tests already exist ($TEST_COUNT) — skipping"
-fi
+echo "Processing ISO 8178 windows..."
+bundle exec rake telematics:process_iso8178 VEHICLE=redmond_ht4
 
-REPORT_COUNT=$(bundle exec rails runner "v = Vehicle.find_by(code: 'redmond_ht4'); puts v ? Input.where(vehicle: v, auto_generated: true).count : 0" 2>/dev/null | tail -1)
-if [ "$REPORT_COUNT" = "0" ]; then
-  echo "Generating daily reports..."
-  bundle exec rake telematics:generate_daily_reports VEHICLE=redmond_ht4
-else
-  echo "Redmond HT4 daily reports already exist ($REPORT_COUNT) — skipping"
-fi
+echo "Generating daily reports..."
+bundle exec rake telematics:generate_daily_reports VEHICLE=redmond_ht4
