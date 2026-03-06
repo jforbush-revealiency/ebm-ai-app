@@ -17,7 +17,9 @@ bundle exec rails runner "
   end
 "
 
-# Import, process, and report — only if not already done
+echo "=== Files in tmp/import ==="
+ls -la /opt/render/project/src/tmp/import/ || echo "Directory not found"
+
 STAT_COUNT=$(bundle exec rails runner "puts VehicleStat.count" 2>/dev/null | tail -1)
 if [ "$STAT_COUNT" = "0" ]; then
   echo "Importing vehicle stats..."
