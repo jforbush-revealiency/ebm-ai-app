@@ -8,7 +8,7 @@ module Api
         {
           id: v.id,
           code: v.code,
-          name: v.name,
+          description: v.description,
           emission_test_count: test_count
         }
       end
@@ -37,7 +37,7 @@ module Api
 
     def daily_reports
       vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
-      reports = Input.where(vehicle: vehicle, auto_generated: true)
+      reports = Input.where(vehicle_code: vehicle.code, auto_generated: true)
                      .order(:submitted)
                      .map do |r|
         avg_nox = [r.left_bank_nox, r.right_bank_nox].compact
