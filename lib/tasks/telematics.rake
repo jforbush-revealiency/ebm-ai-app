@@ -80,7 +80,8 @@ namespace :telematics do
 
       rescue => e
         errors += 1
-        puts "\nError on row #{imported + skipped + errors}: #{e.message}" if errors <= 5
+        puts "\nError on row #{imported + skipped + errors}: #{e.class} — #{e.message}" if errors <= 3
+puts e.backtrace.first if errors <= 3
       end
     end
 
