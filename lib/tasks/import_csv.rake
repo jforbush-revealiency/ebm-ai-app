@@ -38,10 +38,10 @@ namespace :import do
         engine_config.rated_hp       ||= row['Engine HP'].to_f
         engine_config.is_real_values ||= false
         engine_config.save(validate: false)
-        vehicle.model_number  ||= row['Vehicle Model'].to_s.strip
+        vehicle_serial = row['Vehicle Serial #'].to_s.strip
         vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
         vehicle.description   ||= row['Vehicle #'].to_s.strip
-        vehicle.model         ||= row['Vehicle Model'].to_s.strip
+        vehicle.model_number  ||= row['Vehicle Model'].to_s.strip
         vehicle.location      ||= location
         vehicle.engine_config ||= engine_config
         vehicle.save(validate: false)
@@ -61,36 +61,3 @@ namespace :import do
           location:               location,
           vehicle:                vehicle,
           user:                   import_user,
-          engine_hours:           row['Engine Hours'].to_f,
-          engine_rpm:             row['Engine RPM'].to_f,
-          alternator_rpm:         row['Alternator RPM'].to_f,
-          engine_hp:              row['Engine HP'].to_f,
-          alternator_hp:          row['Alternator HP'].to_f,
-          left_bank_co2_percent:  row['Left-CO2%'].to_f,
-          left_bank_co:           row['Left-CO'].to_f,
-          left_bank_nox:          row['Left-NOx'].to_f,
-          right_bank_co2_percent: row['Right-CO2%'].to_f,
-          right_bank_co:          row['Right-CO'].to_f,
-          right_bank_nox:         row['Right-NOX'].to_f,
-          has_engine_codes:       false,
-          auto_generated:         true
-        )
-        input.save(validate: false)
-        begin
-          Output.process_input(input)
-        rescue => e
-          errors << "Output error row #{$.}: #{e.message}"
-        end
-        success_count += 1
-        print '.' if success_count % 50 == 0
-      rescue => e
-        error_count += 1
-        errors << "Row #{$.}: #{e.message}"
-      end
-    end
-    puts "\n\n=== Import Complete ==="
-    puts "Imported: #{success_count}"
-    puts "Errors:   #{error_count}"
-    errors.first(10).each { |e| puts "  - #{e}" } if errors.any?
-  end
-end
