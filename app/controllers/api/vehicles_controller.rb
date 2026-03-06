@@ -3,7 +3,7 @@ module Api
     def index
       vehicles = Vehicle.all.map do |v|
         test_count = ValidEmissionTest.joins(:vehicle_stat)
-                                      .where(vehicle_stats: { vehicle_id: v.id })
+                                      .where(vehicle_stats: { code: v.code })
                                       .count
         {
           id: v.id,
@@ -18,7 +18,7 @@ module Api
     def emission_tests
       vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
       tests = ValidEmissionTest.joins(:vehicle_stat)
-                               .where(vehicle_stats: { vehicle_id: vehicle.id })
+                               .where(vehicle_stats: { code: vehicle.code })
                                .order(:datetime)
                                .map do |t|
         {
