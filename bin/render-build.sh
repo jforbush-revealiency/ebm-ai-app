@@ -21,8 +21,8 @@ bundle exec rails runner "
 bundle exec rails runner "
   v = Vehicle.find_by(code: 'redmond_ht4')
   c = TelematicsConfig.find_by(vehicle: v)
-  c&.update!(min_rpm: 1400, min_load_percent: 85)
-  puts 'Updated thresholds: load>=85% rpm>=1400'
+  c&.update!(min_rpm: 1400, min_load_percent: 85, sample_interval_seconds: 10)
+  puts \"Thresholds: load>=#{c.min_load_percent}% rpm>=#{c.min_rpm} interval=#{c.sample_interval_seconds}s\"
 "
 
 echo "=== Files in tmp/import ==="
