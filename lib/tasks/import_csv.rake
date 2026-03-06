@@ -38,7 +38,7 @@ namespace :import do
         engine_config.rated_hp       ||= row['Engine HP'].to_f
         engine_config.is_real_values ||= false
         engine_config.save(validate: false)
-        vehicle_serial = row['Vehicle Serial #'].to_s.strip
+        vehicle.model_number  ||= row['Vehicle Model'].to_s.strip
         vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
         vehicle.description   ||= row['Vehicle #'].to_s.strip
         vehicle.model         ||= row['Vehicle Model'].to_s.strip
