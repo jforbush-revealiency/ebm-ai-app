@@ -17,6 +17,14 @@ bundle exec rails runner "
   end
 "
 
+# Update thresholds to match actual Redmond HT4 data
+bundle exec rails runner "
+  v = Vehicle.find_by(code: 'redmond_ht4')
+  c = TelematicsConfig.find_by(vehicle: v)
+  c&.update!(min_rpm: 1400, min_load_percent: 85)
+  puts 'Updated thresholds: load>=85% rpm>=1400'
+"
+
 echo "=== Files in tmp/import ==="
 ls -la /opt/render/project/src/tmp/import/ || echo "Directory not found"
 
