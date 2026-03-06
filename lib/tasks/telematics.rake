@@ -374,8 +374,4 @@ namespace :telematics do
   end
 
 end
-```
 
-The key new line to watch for in the next deploy log is:
-```
-Rejected — load/rpm: X  timespan: X  consistency: X  frequency: X
