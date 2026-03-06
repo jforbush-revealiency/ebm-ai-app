@@ -1,11 +1,13 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins(
+    allowed = [
       'http://localhost:3001',
       'http://localhost:3000',
       'https://reportgarden-pro.lovable.app',
       ENV['FRONTEND_URL']
-    ).compact
+    ].compact
+
+    origins(*allowed)
 
     resource '*',
       headers: :any,
