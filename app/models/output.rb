@@ -2,8 +2,6 @@ class Output < ApplicationRecord
   belongs_to :input
 
   # ── Parameter Cache ──────────────────────────────────────────────────────────
-  # Previously, Parameter.find_by_code() was called ~10 times per input,
-  # causing 10 separate DB queries. This caches all parameters once per process.
   def self.parameter_cache
     @parameter_cache ||= Parameter.all.index_by(&:code)
   end
@@ -19,36 +17,36 @@ class Output < ApplicationRecord
   # ── Return Codes ─────────────────────────────────────────────────────────────
   def self.return_codes
     {
-      ok_engine_hours:                                    'Message_ok_engine_hours',
-      investigate_engine_hours:                           'Message_investigate_engine_hours',
-      ok_engine_alternator_rpm_settings:                  'Message_ok_engine_alternator_rpm_settings',
-      ok_engine_alternator_hp_settings:                   'Message_ok_engine_alternator_hp_settings',
-      rated_rpm_limit_exceeded:                           'Message_rated_rpm_limit_exceeded',
-      rated_rpm_max:                                      'Rated_RPM_Max',
+      ok_engine_hours:                                        'Message_ok_engine_hours',
+      investigate_engine_hours:                               'Message_investigate_engine_hours',
+      ok_engine_alternator_rpm_settings:                      'Message_ok_engine_alternator_rpm_settings',
+      ok_engine_alternator_hp_settings:                       'Message_ok_engine_alternator_hp_settings',
+      rated_rpm_limit_exceeded:                               'Message_rated_rpm_limit_exceeded',
+      rated_rpm_max:                                          'Rated_RPM_Max',
       investigate_engine_or_drivetrain_alternator_parasitics: 'Message_investigate_engine_or_drivetrain_alternator_parasitics',
-      rated_rpm_min:                                      'Rated_RPM_Min',
-      ok_bank_balance_check:                              'Message_ok_bank_balance_check',
-      check_left_right_bank_performance:                  'Message_check_left_right_bank_performance',
-      ok_co2_percentage_banks:                            'Message_ok_co2_percentage_banks',
-      low_co2_percentage:                                 'Message_low_co2_percentage',
-      elevated_co2_percentage_message:                    'Message_elevated_co2_percentage',
-      elevated_co2_percentage:                            'Elevated_CO2_Percentage',
-      high_co2_percentage_message:                        'Message_high_co2_percentage',
-      high_co2_percentage:                                'High_CO2_Percentage',
-      ok_co_banks:                                        'Message_ok_co_banks',
-      extremely_high_co:                                  'Message_extremely_high_co',
-      elevated_co_message:                                'Message_elevated_co',
-      elevated_co:                                        'Elevated_CO',
-      high_co_message:                                    'Message_high_co',
-      high_co:                                            'High_CO',
-      high_co_with_low_nox_message:                       'Message_high_co_with_low_nox',
-      high_co_with_low_nox:                               'High_CO_with_Low_NOx',
-      ok_nox_banks:                                       'Message_ok_nox_banks',
-      high_nox:                                           'Message_high_nox',
-      low_nox_message:                                    'Message_low_nox',
-      low_nox:                                            'Low_NOx',
-      very_low_nox_message:                               'Message_very_low_nox',
-      very_low_nox:                                       'Very_Low_NOx',
+      rated_rpm_min:                                          'Rated_RPM_Min',
+      ok_bank_balance_check:                                  'Message_ok_bank_balance_check',
+      check_left_right_bank_performance:                      'Message_check_left_right_bank_performance',
+      ok_co2_percentage_banks:                                'Message_ok_co2_percentage_banks',
+      low_co2_percentage:                                     'Message_low_co2_percentage',
+      elevated_co2_percentage_message:                        'Message_elevated_co2_percentage',
+      elevated_co2_percentage:                                'Elevated_CO2_Percentage',
+      high_co2_percentage_message:                            'Message_high_co2_percentage',
+      high_co2_percentage:                                    'High_CO2_Percentage',
+      ok_co_banks:                                            'Message_ok_co_banks',
+      extremely_high_co:                                      'Message_extremely_high_co',
+      elevated_co_message:                                    'Message_elevated_co',
+      elevated_co:                                            'Elevated_CO',
+      high_co_message:                                        'Message_high_co',
+      high_co:                                                'High_CO',
+      high_co_with_low_nox_message:                           'Message_high_co_with_low_nox',
+      high_co_with_low_nox:                                   'High_CO_with_Low_NOx',
+      ok_nox_banks:                                           'Message_ok_nox_banks',
+      high_nox:                                               'Message_high_nox',
+      low_nox_message:                                        'Message_low_nox',
+      low_nox:                                                'Low_NOx',
+      very_low_nox_message:                                   'Message_very_low_nox',
+      very_low_nox:                                           'Very_Low_NOx',
     }
   end
 
@@ -57,11 +55,11 @@ class Output < ApplicationRecord
     Input.transaction do
       output = input.output || Output.new
 
-      location     = input.vehicle.location
+      location      = input.vehicle.location
       engine_config = input.vehicle.engine_config
-      engine       = engine_config.engine
-      drive_type   = engine.drive_type
-      vehicle      = input.vehicle
+      engine        = engine_config.engine
+      drive_type    = engine.drive_type
+      vehicle       = input.vehicle
 
       previous_engine_hours = vehicle.previous_engine_hours(input)
 
@@ -95,6 +93,7 @@ class Output < ApplicationRecord
       output.co2_percent_left_bank_code    = output.co2_banks(input.left_bank_co2_decimal, engine_config.co2_decimal)
       output.co2_percent_left_bank_message = output.set_message(output.co2_percent_left_bank_code)
 
+      # CO Analysis — manual tests only (CO cannot be measured via telematics)
       unless input.auto_generated?
         output.co_left_bank_code    = output.co_banks(input.left_bank_co, engine_config.co,
                                                       input.left_bank_nox, input.right_bank_nox, engine_config.nox)
@@ -120,12 +119,17 @@ class Output < ApplicationRecord
 
       output.processed = DateTime.now
       output.input     = input
-      output.save!
 
-      input.update!(output_id: output.id)
+      # Use validate: false to allow imported records (auto_generated) to save
+      # without requiring fully validated user/vehicle associations
+      output.save!(validate: false)
 
-      # Do not email if the user belongs to the imports role
-      SystemMailer.results_email(output).deliver_later unless input.user.role?('imports')
+      input.update_column(:output_id, output.id)
+
+      # Do not email if auto_generated (telematics) or imports role
+      unless input.auto_generated? || input.user.role?('imports')
+        SystemMailer.results_email(output).deliver_later rescue nil
+      end
 
       output
     end
@@ -163,14 +167,13 @@ class Output < ApplicationRecord
   end
 
   def engine_alternator_hp_value(drive_type, engine_hp, alternator_hp)
-    # TODO: HP check logic — currently returns OK for all cases.
-    # Implement based on drive_type-specific HP tolerance thresholds.
+    # TODO: Implement HP tolerance check based on drive_type thresholds
     Output.return_codes[:ok_engine_alternator_hp_settings]
   end
 
   def bank_balance_check(left_bank, right_bank)
-    # FIX: Guard against divide-by-zero when left_bank is 0 or nil
     return Output.return_codes[:ok_bank_balance_check] if left_bank.to_f.zero?
+    return Output.return_codes[:ok_bank_balance_check] if right_bank.nil?
 
     bank_check_max = param('Bank_Check_Max').to_f
     tolerance      = ((left_bank - right_bank).abs / left_bank.to_f)
@@ -201,9 +204,8 @@ class Output < ApplicationRecord
   end
 
   def co_banks(actual, target, left_bank_nox, right_bank_nox, nox_target)
-    # FIX: Removed debug puts statements
-    co_elevated    = param('Elevated_CO').to_f
-    co_high        = param('High_CO').to_f
+    co_elevated     = param('Elevated_CO').to_f
+    co_high         = param('High_CO').to_f
     high_co_low_nox = param('High_CO_with_Low_NOx').to_f
 
     if actual < (co_elevated * target)
@@ -231,17 +233,17 @@ class Output < ApplicationRecord
     nox_min      = param('Low_Nox').to_f
     very_low_min = param('Very_Low_Nox').to_f
 
-    high_nox = false
-    low_nox  = false
+    high_nox     = false
+    low_nox      = false
     very_low_nox = false
 
     if attainment
-      nox_max  = param('Nox_Upper_Max').to_f
-      high_nox = tolerance > nox_max
+      nox_max      = param('Nox_Upper_Max').to_f
+      high_nox     = tolerance > nox_max
       very_low_nox = !high_nox && tolerance < very_low_min
       low_nox      = !high_nox && !very_low_nox && tolerance < nox_min
     else
-      high_nox = actual > target
+      high_nox     = actual > target
       very_low_nox = !high_nox && tolerance < very_low_min
       low_nox      = !high_nox && !very_low_nox && tolerance < nox_min
     end
