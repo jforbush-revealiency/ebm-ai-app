@@ -21,8 +21,8 @@ bundle exec rails runner "
 bundle exec rails runner "
   v = Vehicle.find_by(code: 'redmond_ht4')
   c = TelematicsConfig.find_by(vehicle: v)
-  c&.update!(min_rpm: 1400, min_load_percent: 85, sample_interval_seconds: 10)
-  puts \"Thresholds: load>=#{c.min_load_percent}% rpm>=#{c.min_rpm} interval=#{c.sample_interval_seconds}s\"
+  c&.update!(min_rpm: 1400, min_load_percent: 85)
+  puts 'Thresholds updated'
 "
 
 echo "=== Files in tmp/import ==="
@@ -44,7 +44,10 @@ else
   echo "Valid emission tests already exist ($TEST_COUNT) — skipping"
 fi
 
-REPORT_COUNT=$(bundle exec rails runner "puts Input.where(auto_generated: true).count" 2>/dev/null | tail -1)
+REPORT_COUNT=$(bundle exec rails runner "
+  v = Vehicle.find_by(code: 'redmond_ht4')
+  puts v ? Input.where(vehicle: v, auto_generated: true).count : 0
+" 2>/dev/null | tail -1)
 if [ "$REPORT_COUNT" = "0" ]; then
   echo "Generating daily reports..."
   bundle exec rake telematics:generate_daily_reports VEHICLE=redmond_ht4
