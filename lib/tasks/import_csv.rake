@@ -9,6 +9,7 @@ namespace :import do
     end
     puts "Starting import from #{file_path}..."
     import_user = User.find_by(role: 'imports') || User.find_by(role: 'site_admin')
+    default_drive_type = DriveType.first || DriveType.create!(code: 'ELECTRIC', description: 'Electric')
     success_count = 0
     error_count   = 0
     errors        = []
@@ -28,14 +29,15 @@ namespace :import do
           m.description = engine_make
         end
         engine_model = row['Engine Model'].to_s.strip
-        engine = Engine.find_or_create_by!(code: engine_model, manufacturer: manufacturer) do |e|
-          e.description = engine_model
-        end
-        engine_config = EngineConfig.find_or_create_by!(engine: engine, code: engine_model) do |ec|
-          ec.rated_rpm      = row['Engine RPM'].to_f
-          ec.rated_hp       = row['Engine HP'].to_f
-          ec.is_real_values = false
-        end
+        engine = Engine.find_or_initialize_by(code: engine_model, manufacturer: manufacturer)
+        engine.description   ||= engine_model
+        engine.drive_type    ||= default_drive_type
+        engine.save(validate: false)
+        engine_config = EngineConfig.find_or_initialize_by(engine: engine, code: engine_model)
+        engine_config.rated_rpm      ||= row['Engine RPM'].to_f
+        engine_config.rated_hp       ||= row['Engine HP'].to_f
+        engine_config.is_real_values ||= false
+        engine_config.save(validate: false)
         vehicle_serial = row['Vehicle Serial #'].to_s.strip
         vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
         vehicle.description   ||= row['Vehicle #'].to_s.strip
