@@ -17,36 +17,27 @@ bundle exec rails runner "
   end
 "
 
-# Import CSV if vehicle_stats is empty
-bundle exec rails runner "
-  if VehicleStat.count == 0
-    puts 'Importing vehicle stats...'
-    ENV['FILE']    = 'tmp/import/redmond_ht4_feb2018.csv'
-    ENV['VEHICLE'] = 'redmond_ht4'
-    Rake::Task['telematics:import_stats'].invoke
-  else
-    puts 'Vehicle stats already imported — skipping'
-  end
-"
+# Import, process, and report — only if not already done
+STAT_COUNT=$(bundle exec rails runner "puts VehicleStat.count" 2>/dev/null | tail -1)
+if [ "$STAT_COUNT" = "0" ]; then
+  echo "Importing vehicle stats..."
+  bundle exec rake telematics:import_stats FILE=tmp/import/redmond_ht4_feb2018.csv VEHICLE=redmond_ht4
+else
+  echo "Vehicle stats already imported ($STAT_COUNT rows) — skipping"
+fi
 
-# Process ISO 8178 windows if no valid emission tests exist
-bundle exec rails runner "
-  if ValidEmissionTest.count == 0
-    puts 'Processing ISO 8178 windows...'
-    ENV['VEHICLE'] = 'redmond_ht4'
-    Rake::Task['telematics:process_iso8178'].invoke
-  else
-    puts 'Valid emission tests already exist — skipping'
-  end
-"
+TEST_COUNT=$(bundle exec rails runner "puts ValidEmissionTest.count" 2>/dev/null | tail -1)
+if [ "$TEST_COUNT" = "0" ]; then
+  echo "Processing ISO 8178 windows..."
+  bundle exec rake telematics:process_iso8178 VEHICLE=redmond_ht4
+else
+  echo "Valid emission tests already exist ($TEST_COUNT) — skipping"
+fi
 
-# Generate daily reports if none exist
-bundle exec rails runner "
-  if Input.where(auto_generated: true).count == 0
-    puts 'Generating daily reports...'
-    ENV['VEHICLE'] = 'redmond_ht4'
-    Rake::Task['telematics:generate_daily_reports'].invoke
-  else
-    puts 'Daily reports already exist — skipping'
-  end
-"
+REPORT_COUNT=$(bundle exec rails runner "puts Input.where(auto_generated: true).count" 2>/dev/null | tail -1)
+if [ "$REPORT_COUNT" = "0" ]; then
+  echo "Generating daily reports..."
+  bundle exec rake telematics:generate_daily_reports VEHICLE=redmond_ht4
+else
+  echo "Daily reports already exist ($REPORT_COUNT) — skipping"
+fi
