@@ -26,13 +26,11 @@ bundle exec rails runner "
 echo '=== Files in tmp/import ==='
 ls -la /opt/render/project/src/tmp/import/ || echo 'Directory not found'
 
-STAT_COUNT=$(bundle exec rails runner "puts VehicleStat.count" 2>/dev/null | tail -1)
-if [ "$STAT_COUNT" = "0" ]; then
-  echo "Importing vehicle stats..."
-  bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import/redmond_ht4_feb2018.csv VEHICLE=redmond_ht4
-else
-  echo "Vehicle stats already imported ($STAT_COUNT rows) — skipping"
-fi
+echo "Importing Feb 2018 stats..."
+bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import/redmond_ht4_feb2018.csv VEHICLE=redmond_ht4
+
+echo "Importing Oct 2017 stats..."
+bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import/redmond_ht4_oct2017.csv VEHICLE=redmond_ht4
 
 TEST_COUNT=$(bundle exec rails runner "puts ValidEmissionTest.count" 2>/dev/null | tail -1)
 if [ "$TEST_COUNT" = "0" ]; then
