@@ -21,7 +21,7 @@ bundle exec rails runner "
 STAT_COUNT=$(bundle exec rails runner "puts VehicleStat.count" 2>/dev/null | tail -1)
 if [ "$STAT_COUNT" = "0" ]; then
   echo "Importing vehicle stats..."
-  bundle exec rake telematics:import_stats FILE=tmp/import/redmond_ht4_feb2018.csv VEHICLE=redmond_ht4
+  bundle exec rake telematics:import_stats FILE=/opt/render/project/src/tmp/import/redmond_ht4_feb2018.csv VEHICLE=redmond_ht4
 else
   echo "Vehicle stats already imported ($STAT_COUNT rows) — skipping"
 fi
