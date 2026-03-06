@@ -2,14 +2,11 @@ module Api
   class VehiclesController < BaseController
     def index
       vehicles = Vehicle.all.map do |v|
-        test_count = ValidEmissionTest.joins(:vehicle_stat)
-                                      .where(vehicle_stats: { code: v.code })
-                                      .count
         {
           id: v.id,
           code: v.code,
           description: v.description,
-          emission_test_count: test_count
+          emission_test_count: ValidEmissionTest.where(code: v.code).count
         }
       end
       render json: vehicles
@@ -17,8 +14,7 @@ module Api
 
     def emission_tests
       vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
-      tests = ValidEmissionTest.joins(:vehicle_stat)
-                               .where(vehicle_stats: { code: vehicle.code })
+      tests = ValidEmissionTest.where(code: vehicle.code)
                                .order(:datetime)
                                .map do |t|
         {
