@@ -3,7 +3,17 @@ EngineConfig.find_each do |c|
   c.update(co2_percent: 12.5) if c.co2_percent.nil? || c.co2_percent == 0
 end
 Input.where(test_type: nil).update_all(test_type: 'manual')
-puts "Generating missing Output records..."
+puts "Linking inputs (case-insensitive)..."
+linked = 0
+Input.where(vehicle_id: nil).find_each do |i|
+  next if i.vehicle_code.blank?
+  v = Vehicle.where('LOWER(code) = ?', i.vehicle_code.downcase).first
+  next unless v
+  i.update_column(:vehicle_id, v.id)
+  linked += 1
+end
+puts "Linked: #{linked}"
+puts "Generating missing outputs..."
 generated = 0
 Input.find_each do |i|
   next if Output.exists?(input_id: i.id)
@@ -11,10 +21,10 @@ Input.find_each do |i|
     Output.process_input(i)
     generated += 1
   rescue => e
-    puts "  Error on input #{i.id}: #{e.message}"
+    puts "  Error #{i.id}: #{e.message}"
   end
 end
-puts "Generated: #{generated} output records"
+puts "Generated: #{generated}"
 puts "Updating statuses..."
 Vehicle.find_each do |v|
   i = Input.where(vehicle_id: v.id).order(submitted: :desc).first
