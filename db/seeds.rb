@@ -13,6 +13,14 @@ Input.where(vehicle_id: nil).find_each do |i|
   linked += 1
 end
 puts "Linked: #{linked}"
+puts "Checking suspicious vehicle assignments..."
+Vehicle.find_each do |v|
+  count = Input.where(vehicle_id: v.id).count
+  if count > 0
+    sample = Input.where(vehicle_id: v.id).first
+    puts "  #{v.description} (code:'#{v.code}') => #{count} tests, sample vehicle_code: '#{sample.vehicle_code}'"
+  end
+end
 puts "Generating missing outputs..."
 generated = 0
 Input.find_each do |i|
@@ -35,6 +43,5 @@ Vehicle.find_each do |v|
   s = codes.match?(/warning|Warning|high|High/) ? 'critical' : codes.match?(/low|Low|caution|Caution/) ? 'marginal' : 'in_spec'
   v.update_column(:last_diagnostic_status, s) rescue nil
   v.update_column(:last_test_date, i.submitted) rescue nil
-  puts "  #{v.code} => #{s}"
 end
 puts "Done!"
