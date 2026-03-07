@@ -7,8 +7,7 @@ Rails.application.routes.draw do
         get :daily_reports
       end
     end
-    get 'inputs/:id/diagnostic', to: 'diagnostic#show'
-    get 'admin/reprocess_outputs', to: 'admin#reprocess_outputs'
+    get 'inputs/:id/diagnostic', to: 'diagnostic#show'    
   end
   devise_for :users,
     skip: [:registrations],
