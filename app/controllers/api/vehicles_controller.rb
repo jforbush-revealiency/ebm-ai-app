@@ -1,55 +1,32 @@
-module Api
-  class VehiclesController < BaseController
-    def index
-      vehicles = Vehicle.all.map do |v|
-        {
-          id: v.id,
-          code: v.code,
-          description: v.description,
-          emission_test_count: ValidEmissionTest.where(code: v.code).count
-        }
-      end
-      render json: vehicles
-    end
+class Api::VehiclesController < ApplicationController
+  def index
+    vehicles = Vehicle.all.order(:description)
+    render json: vehicles.map { |v|
+      {
+        id: v.id,
+        code: v.code,
+        description: v.description,
+        emission_test_count: Input.where(vehicle_id: v.id).count,
+        last_diagnostic_status: v.last_diagnostic_status,
+        last_test_date: v.last_test_date,
+        company: v.company&.name,
+        location: v.location&.description
+      }
+    }
+  end
 
-    def emission_tests
-      vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
-      tests = ValidEmissionTest.where(code: vehicle.code)
-                               .order(:datetime)
-                               .map do |t|
-        {
-          id: t.id,
-          recorded_at: t.datetime,
-          nox_ppm: t.nox_ppm&.round(2),
-          co2_percent: t.co2_percent&.round(2),
-          rpm: t.rpm,
-          percent_load: t.percent_load
-        }
-      end
-      render json: { vehicle: vehicle.code, tests: tests }
-    rescue ActiveRecord::RecordNotFound
-      render_error("Vehicle not found", :not_found)
-    end
-
-    def daily_reports
-      vehicle = Vehicle.find_by(code: params[:id]) || Vehicle.find(params[:id])
-      reports = Input.where(vehicle_code: vehicle.code, auto_generated: true)
-                     .order(:submitted)
-                     .map do |r|
-        avg_nox = [r.left_bank_nox, r.right_bank_nox].compact
-        avg_co2 = [r.left_bank_co2_percent, r.right_bank_co2_percent].compact
-        {
-          id: r.id,
-          date: r.submitted&.to_date,
-          avg_nox_ppm: avg_nox.any? ? (avg_nox.sum / avg_nox.size).round(2) : nil,
-          avg_co2_percent: avg_co2.any? ? (avg_co2.sum / avg_co2.size).round(2) : nil,
-          avg_rpm: r.engine_rpm&.round(0),
-          engine_hours: r.engine_hours
-        }
-      end
-      render json: { vehicle: vehicle.code, reports: reports }
-    rescue ActiveRecord::RecordNotFound
-      render_error("Vehicle not found", :not_found)
-    end
+  def show
+    vehicle = Vehicle.find(params[:id])
+    render json: {
+      id: vehicle.id,
+      code: vehicle.code,
+      description: vehicle.description,
+      last_diagnostic_status: vehicle.last_diagnostic_status,
+      last_test_date: vehicle.last_test_date,
+      company: vehicle.company&.name,
+      inputs: Input.where(vehicle_id: vehicle.id).order(submitted: :desc).limit(10).map { |i|
+        { id: i.id, submitted: i.submitted, engine_hours: i.engine_hours }
+      }
+    }
   end
 end
