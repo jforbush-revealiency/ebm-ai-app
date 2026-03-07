@@ -1,23 +1,19 @@
 class Api::DiagnosticController < ApplicationController
   def show
-    # Handle both :id and :input_id route param names
     id = params[:input_id] || params[:id]
-    
     input = Input.find(id)
     engine_config = input.vehicle&.engine_config
 
     params_hash = Parameter.all.index_by(&:code)
-    def p(code, default)
-      params_hash[code]&.value&.to_f || default
-    end
+    thresh = ->(code, default) { params_hash[code]&.value&.to_f || default }
 
-    bank_check_max = p('Bank_Check_Max', 0.2)
-    elevated_co    = p('Elevated_CO', 2.0)
-    high_co        = p('High_CO', 3.0)
-    high_co2_pct   = p('High_CO2_Percentage', 0.05)
-    low_nox        = p('Low_NOx', -0.20)
-    very_low_nox   = p('Very_Low_NOx', -0.25)
-    nox_upper_max  = p('Nox_Upper_Max', 0.2)
+    bank_check_max = thresh.('Bank_Check_Max', 0.2)
+    elevated_co    = thresh.('Elevated_CO', 2.0)
+    high_co        = thresh.('High_CO', 3.0)
+    high_co2_pct   = thresh.('High_CO2_Percentage', 0.05)
+    low_nox        = thresh.('Low_NOx', -0.20)
+    very_low_nox   = thresh.('Very_Low_NOx', -0.25)
+    nox_upper_max  = thresh.('Nox_Upper_Max', 0.2)
 
     sections = {}
 
