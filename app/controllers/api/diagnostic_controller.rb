@@ -46,8 +46,8 @@ class Api::DiagnosticController < ApplicationController
     end
 
     rated_co2 = engine_config&.co2_percent.to_f
-    left_co2  = input.co2_percent_left.to_f
-    right_co2 = input.co2_percent_right.to_f
+    left_co2  = input.left_bank_co2_percent.to_f
+    right_co2 = input.right_bank_co2_percent.to_f
 
     sections[:co2] = {}
     if rated_co2 > 0 && left_co2 > 0
@@ -73,8 +73,8 @@ class Api::DiagnosticController < ApplicationController
     end
 
     rated_co = engine_config&.co.to_f
-    left_co  = input.co_left.to_f
-    right_co = input.co_right.to_f
+    left_co  = input.left_bank_co.to_f
+    right_co = input.right_bank_co.to_f
 
     sections[:co] = {}
     if rated_co > 0 && left_co > 0
@@ -104,8 +104,8 @@ class Api::DiagnosticController < ApplicationController
     end
 
     rated_nox = engine_config&.nox.to_f
-    left_nox  = input.nox_left.to_f
-    right_nox = input.nox_right.to_f
+    left_nox  = input.left_bank_nox.to_f
+    right_nox = input.right_bank_nox.to_f
 
     sections[:nox] = {}
     if rated_nox > 0 && left_nox > 0
@@ -155,20 +155,15 @@ class Api::DiagnosticController < ApplicationController
     render json: {
       input_id:       input.id,
       vehicle_code:   input.vehicle&.code,
-      submitted:      input.created_at&.strftime('%Y-%m-%d'),
+      submitted:      input.submitted&.strftime('%Y-%m-%d'),
       engine_hours:   hours > 0 ? hours : nil,
-      test_type:      'manual',
+      test_type:      input.test_type || 'manual',
       overall_status: overall,
-      sections:       sections,
-      debug_first_input_id: Input.minimum(:id)
+      sections:       sections
     }
 
   rescue ActiveRecord::RecordNotFound
-    render json: {
-      error: 'Input not found',
-      debug_first_input_id: Input.minimum(:id),
-      debug_total_inputs: Input.count
-    }, status: :not_found
+    render json: { error: 'Input not found' }, status: :not_found
   rescue => e
     render json: { error: e.message }, status: :internal_server_error
   end
