@@ -1,4 +1,4 @@
-class Api::AdminController < ApplicationController
+class Api::AdminController < Api::BaseController
   def reprocess_outputs
     limit = (params[:limit] || 50).to_i
     offset = (params[:offset] || 0).to_i
