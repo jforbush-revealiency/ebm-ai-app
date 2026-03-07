@@ -24,12 +24,9 @@ class Api::VehiclesController < ApplicationController
       last_diagnostic_status: vehicle.try(:last_diagnostic_status),
       last_test_date: vehicle.try(:last_test_date),
       company: vehicle.try(:company_code),
-      inputs: Input.where(vehicle_id: vehicle.id)
-                   .order(submitted: :desc)
-                   .limit(10)
-                   .map { |i|
-                     { id: i.id, submitted: i.submitted, engine_hours: i.engine_hours }
-                   }
+      inputs: Input.where(vehicle_id: vehicle.id).order(submitted: :desc).limit(10).map { |i|
+        { id: i.id, submitted: i.submitted, engine_hours: i.engine_hours }
+      }
     }
   end
 end
