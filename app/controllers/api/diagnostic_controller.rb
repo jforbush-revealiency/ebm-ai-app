@@ -33,7 +33,8 @@ module Api
       rated_rpm = engine_config.rated_rpm.to_f
       rated_hp  = engine_config.rated_hp.to_f
       is_single_stack = engine_config.engine&.is_single_stack
-      is_telematic = input.test_type == 'telematic'
+      has_emissions_data = input.left_bank_co2_percent.to_f > 0 || input.right_bank_co2_percent.to_f > 0
+is_telematic = !has_emissions_data
 
       left_nox  = input.left_bank_nox.to_f
       right_nox = input.right_bank_nox.to_f
