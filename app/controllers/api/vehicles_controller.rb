@@ -10,7 +10,8 @@ class Api::VehiclesController < ApplicationController
         last_diagnostic_status: v.try(:last_diagnostic_status),
         last_test_date: v.try(:last_test_date),
         company: v.try(:company_code),
-        location: v.try(:location_code)
+        location: v.try(:location_code),
+        inputs: Input.where(vehicle_id: v.id).order(submitted: :desc).pluck(:id)
       }
     }
   end
