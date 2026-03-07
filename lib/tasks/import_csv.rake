@@ -73,7 +73,8 @@ namespace :import do
           right_bank_co:          row['Right-CO'].to_f,
           right_bank_nox:         row['Right-NOX'].to_f,
           has_engine_codes:       false,
-          auto_generated:         true
+          auto_generated:         true,
+          test_type:              'manual'
         )
         input.save(validate: false)
         begin
