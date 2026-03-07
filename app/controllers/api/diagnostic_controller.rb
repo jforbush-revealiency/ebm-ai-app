@@ -1,175 +1,186 @@
-module Api
-  class DiagnosticController < BaseController
+class Api::DiagnosticController < ApplicationController
+  def show
+    input = Input.find(params[:input_id])
+    output = input.output
+    engine_config = input.vehicle&.engine_config
 
-    def show
-      input = Input.find(params[:id])
-      vehicle = Vehicle.find_by(code: input.vehicle_code)
-      engine_config = vehicle&.engine_config
-
-      unless input && vehicle && engine_config
-        render json: { error: "Input, vehicle, or engine config not found" }, status: :not_found
-        return
-      end
-
-      params_hash = Parameter.all.each_with_object({}) do |p, h|
-        h[p.code] = p.value
-      end
-
-      very_low_nox     = params_hash['Very_Low_NOx'].to_f
-      low_nox          = params_hash['Low_NOx'].to_f
-      nox_upper_max    = params_hash['Nox_Upper_Max'].to_f
-      elevated_co2     = params_hash['Elevated_CO2_Percentage'].to_f
-      high_co2         = params_hash['High_CO2_Percentage'].to_f
-      elevated_co_mult = params_hash['Elevated_CO'].to_f
-      high_co_mult     = params_hash['High_CO'].to_f
-      high_co_low_nox  = params_hash['High_CO_with_Low_NOx'].to_f
-      bank_check_max   = params_hash['Bank_Check_Max'].to_f
-      rpm_max          = params_hash['Rated_RPM_Max'].to_f
-      rpm_min          = params_hash['Rated_RPM_Min'].to_f
-
-      rated_nox = engine_config.nox.to_f
-      rated_co2 = engine_config.co2_percent.to_f
-      rated_co  = engine_config.co.to_f
-      rated_rpm = engine_config.rated_rpm.to_f
-      rated_hp  = engine_config.rated_hp.to_f
-      is_single_stack = engine_config.engine&.is_single_stack
-      has_emissions_data = input.left_bank_co2_percent.to_f > 0 || input.right_bank_co2_percent.to_f > 0
-is_telematic = !has_emissions_data
-
-      left_nox  = input.left_bank_nox.to_f
-      right_nox = input.right_bank_nox.to_f
-      left_co2  = input.left_bank_co2_percent.to_f
-      right_co2 = input.right_bank_co2_percent.to_f
-      left_co   = input.left_bank_co.to_f
-      right_co  = input.right_bank_co.to_f
-
-      engine_hours_result = diagnose_engine_hours(input, params_hash)
-      rpm_result          = diagnose_rpm(input.engine_rpm, rated_rpm, rpm_min, rpm_max, params_hash)
-      hp_result           = diagnose_hp(input.engine_hp, rated_hp, params_hash)
-      left_co2_result     = diagnose_co2(left_co2, rated_co2, elevated_co2, high_co2, params_hash)
-      right_co2_result    = is_single_stack ? nil : diagnose_co2(right_co2, rated_co2, elevated_co2, high_co2, params_hash)
-      left_co_result      = diagnose_co(left_co, rated_co, left_nox, rated_nox, elevated_co_mult, high_co_mult, high_co_low_nox, is_telematic, params_hash)
-      right_co_result     = is_single_stack ? nil : diagnose_co(right_co, rated_co, right_nox, rated_nox, elevated_co_mult, high_co_mult, high_co_low_nox, is_telematic, params_hash)
-      left_nox_result     = diagnose_nox(left_nox, rated_nox, very_low_nox, low_nox, nox_upper_max, params_hash)
-      right_nox_result    = is_single_stack ? nil : diagnose_nox(right_nox, rated_nox, very_low_nox, low_nox, nox_upper_max, params_hash)
-      bank_balance_result = is_single_stack ? nil : diagnose_bank_balance(left_nox, right_nox, left_co2, right_co2, bank_check_max, params_hash)
-
-      render json: {
-        input_id:         input.id,
-        vehicle:          vehicle.description,
-        vehicle_code:     vehicle.code,
-        engine:           engine_config.description,
-        is_single_stack:  is_single_stack,
-        test_type:        is_telematic ? 'telematic' : 'manual',
-        has_engine_codes: input.has_engine_codes,
-        actuals: {
-          engine_hours:   input.engine_hours,
-          engine_rpm:     input.engine_rpm,
-          alternator_rpm: input.alternator_rpm,
-          engine_hp:      input.engine_hp,
-          alternator_hp:  input.alternator_hp
-        },
-        sections: {
-          engine_hours: engine_hours_result,
-          rpm:          rpm_result,
-          hp:           hp_result,
-          co2: { left: left_co2_result, right: right_co2_result },
-          co:  { left: left_co_result,  right: right_co_result  },
-          nox: { left: left_nox_result, right: right_nox_result },
-          bank_balance: bank_balance_result
-        }
-      }
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: "Input not found" }, status: :not_found
+    # Pull parameter thresholds from DB or use defaults
+    params_hash = Parameter.all.index_by(&:code)
+    def p(code, default)
+      params_hash[code]&.value&.to_f || default
     end
 
-    private
+    bank_check_max   = p('Bank_Check_Max', 0.2)
+    elevated_co      = p('Elevated_CO', 2.0)
+    high_co          = p('High_CO', 3.0)
+    high_co2_pct     = p('High_CO2_Percentage', 0.05)
+    low_nox          = p('Low_NOx', -0.20)
+    very_low_nox     = p('Very_Low_NOx', -0.25)
+    nox_upper_max    = p('Nox_Upper_Max', 0.2)
 
-    def diagnose_engine_hours(input, p)
-      { status: 'ok', value: input.engine_hours, message: 'OK' }
+    sections = {}
+
+    # --- Engine Hours ---
+    hours = input.engine_hours.to_f
+    sections[:engine_hours] = if hours > 0
+      { status: 'ok', message: 'Engine hours recorded', value: hours }
+    else
+      { status: 'unknown', message: 'Engine hours not recorded', value: nil }
     end
 
-    def diagnose_rpm(actual_rpm, rated_rpm, rpm_min, rpm_max, p)
-      return { status: 'unknown', message: 'No RPM data' } if actual_rpm.nil? || rated_rpm.zero?
-      ratio = (actual_rpm.to_f - rated_rpm) / rated_rpm
-      if ratio > rpm_max
-        { status: 'warning', value: actual_rpm, message: p['Message_rated_rpm_limit_exceeded'] || 'Check Alternator settings or torque convertor stall point.' }
-      elsif ratio < rpm_min
-        { status: 'warning', value: actual_rpm, message: p['Message_investigate_engine_alternator_rpm_settings'] || 'Investigate Engine/Alternator RPM settings' }
+    # --- RPM ---
+    rated_rpm = engine_config&.rated_rpm.to_f
+    actual_rpm = input.engine_rpm.to_f
+    sections[:rpm] = if rated_rpm > 0 && actual_rpm > 0
+      variance = (actual_rpm - rated_rpm) / rated_rpm
+      if variance.abs > 0.05
+        { status: 'warning', message: "RPM variance #{(variance * 100).round(1)}% from rated #{rated_rpm.to_i}", value: actual_rpm }
       else
-        { status: 'ok', value: actual_rpm, message: 'OK' }
+        { status: 'ok', message: "RPM within spec (#{actual_rpm.to_i} / #{rated_rpm.to_i} rated)", value: actual_rpm }
       end
+    else
+      { status: 'unknown', message: 'RPM data unavailable', value: actual_rpm > 0 ? actual_rpm : nil }
     end
 
-    def diagnose_hp(engine_hp, rated_hp, p)
-      return { status: 'unknown', message: 'No HP data' } if engine_hp.nil? || rated_hp.zero?
-      ratio = (engine_hp.to_f - rated_hp).abs / rated_hp
-      if ratio > p['Horse_Power_Variances_Max'].to_f
-        { status: 'warning', value: engine_hp, message: p['Message_investigate_engine_or_drivetrain_alternator_parasitics'] || 'Investigate engine or drivetrain alternator parasitics' }
+    # --- HP ---
+    rated_hp = engine_config&.rated_hp.to_f
+    actual_hp = input.engine_hp.to_f
+    sections[:hp] = if rated_hp > 0 && actual_hp > 0
+      { status: 'ok', message: "HP within spec (#{actual_hp.to_i} / #{rated_hp.to_i} rated)", value: actual_hp }
+    else
+      { status: 'unknown', message: 'HP data unavailable', value: actual_hp > 0 ? actual_hp : nil }
+    end
+
+    # --- CO2 ---
+    rated_co2 = engine_config&.co2_percent.to_f
+    left_co2  = input.co2_percent_left.to_f
+    right_co2 = input.co2_percent_right.to_f
+
+    sections[:co2] = {}
+    if rated_co2 > 0 && left_co2 > 0
+      variance = (left_co2 - rated_co2) / rated_co2
+      sections[:co2][:left] = if variance > high_co2_pct
+        { status: 'warning', message: "High CO2: #{left_co2}% vs #{rated_co2}% rated", value: left_co2 }
+      elsif variance < -high_co2_pct
+        { status: 'warning', message: "Low CO2: #{left_co2}% vs #{rated_co2}% rated", value: left_co2 }
       else
-        { status: 'ok', value: engine_hp, message: 'OK' }
+        { status: 'ok', message: "CO2 within spec: #{left_co2}%", value: left_co2 }
       end
+    else
+      sections[:co2][:left] = { status: 'unknown', message: 'CO2 left bank data unavailable', value: left_co2 > 0 ? left_co2 : nil }
     end
 
-    def diagnose_co2(actual_co2, rated_co2, elevated_co2, high_co2, p)
-      return { status: 'unknown', message: 'No CO2 data' } if actual_co2.zero? || rated_co2.zero?
-      ratio = (actual_co2 - rated_co2) / rated_co2
-      if ratio > high_co2
-        { status: 'warning', value: actual_co2, message: p['Message_high_co2_percentage'] || 'Warning - High CO2%' }
-      elsif ratio > elevated_co2
-        { status: 'caution', value: actual_co2, message: p['Message_elevated_co2_percentage'] || 'Caution - Elevated CO2%' }
-      elsif ratio < -high_co2
-        { status: 'caution', value: actual_co2, message: p['Message_low_co2_percentage'] || 'Caution - Low CO2%' }
+    if rated_co2 > 0 && right_co2 > 0
+      variance = (right_co2 - rated_co2) / rated_co2
+      sections[:co2][:right] = if variance > high_co2_pct
+        { status: 'warning', message: "High CO2: #{right_co2}% vs #{rated_co2}% rated", value: right_co2 }
+      elsif variance < -high_co2_pct
+        { status: 'warning', message: "Low CO2: #{right_co2}% vs #{rated_co2}% rated", value: right_co2 }
       else
-        { status: 'ok', value: actual_co2, message: 'OK' }
+        { status: 'ok', message: "CO2 within spec: #{right_co2}%", value: right_co2 }
       end
+    else
+      sections[:co2][:right] = { status: 'unknown', message: 'CO2 right bank data unavailable', value: right_co2 > 0 ? right_co2 : nil }
     end
 
-    def diagnose_co(actual_co, rated_co, actual_nox, rated_nox, elevated_mult, high_mult, high_co_low_nox, is_telematic, p)
-      return { status: 'skip', message: 'CO not measured (telematic)' } if is_telematic
-      nox_ratio = rated_nox.zero? ? 0 : (actual_nox - rated_nox) / rated_nox
-      if actual_co >= rated_co * high_mult
-        { status: 'warning', value: actual_co, message: p['Message_extremely_high_co'] || 'Warning - Extremely High CO Concentration' }
-      elsif actual_co >= rated_co * elevated_mult && nox_ratio < high_co_low_nox
-        { status: 'warning', value: actual_co, message: p['Message_high_co_with_low_nox'] || 'Warning - High CO with Low NOx' }
-      elsif actual_co >= rated_co * elevated_mult
-        { status: 'caution', value: actual_co, message: p['Message_high_co'] || 'Caution - High CO' }
-      elsif actual_co > rated_co
-        { status: 'notice', value: actual_co, message: p['Message_elevated_co'] || 'Notice - Elevated CO' }
+    # --- CO ---
+    rated_co = engine_config&.co.to_f
+    left_co  = input.co_left.to_f
+    right_co = input.co_right.to_f
+
+    sections[:co] = {}
+    if rated_co > 0 && left_co > 0
+      ratio = left_co / rated_co
+      sections[:co][:left] = if ratio >= high_co
+        { status: 'warning', message: "WARNING: Extremely High CO Concentration (#{left_co.to_i} vs #{rated_co.to_i} rated)", value: left_co }
+      elsif ratio >= elevated_co
+        { status: 'caution', message: "Elevated CO detected (#{left_co.to_i} vs #{rated_co.to_i} rated)", value: left_co }
       else
-        { status: 'ok', value: actual_co, message: 'OK' }
+        { status: 'ok', message: "CO within spec: #{left_co.to_i}", value: left_co }
       end
+    else
+      sections[:co][:left] = { status: 'unknown', message: 'CO left bank data unavailable', value: left_co > 0 ? left_co : nil }
     end
 
-    def diagnose_nox(actual_nox, rated_nox, very_low_nox, low_nox, nox_upper_max, p)
-      return { status: 'unknown', message: 'No NOx data' } if actual_nox.zero? || rated_nox.zero?
-      ratio = (actual_nox - rated_nox) / rated_nox
-      if ratio < very_low_nox
-        { status: 'warning', value: actual_nox, message: p['Message_very_low_nox'] || 'Warning - Very Low NOx' }
-      elsif ratio < low_nox
-        { status: 'caution', value: actual_nox, message: p['Message_low_nox'] || 'Caution - Low NOx' }
-      elsif ratio > nox_upper_max
-        { status: 'warning', value: actual_nox, message: p['Message_high_nox'] || 'Warning - High NOx' }
+    if rated_co > 0 && right_co > 0
+      ratio = right_co / rated_co
+      sections[:co][:right] = if ratio >= high_co
+        { status: 'warning', message: "WARNING: Extremely High CO Concentration (#{right_co.to_i} vs #{rated_co.to_i} rated)", value: right_co }
+      elsif ratio >= elevated_co
+        { status: 'caution', message: "Elevated CO detected (#{right_co.to_i} vs #{rated_co.to_i} rated)", value: right_co }
       else
-        { status: 'ok', value: actual_nox, message: 'OK' }
+        { status: 'ok', message: "CO within spec: #{right_co.to_i}", value: right_co }
       end
+    else
+      sections[:co][:right] = { status: 'unknown', message: 'CO right bank data unavailable', value: right_co > 0 ? right_co : nil }
     end
 
-    def diagnose_bank_balance(left_nox, right_nox, left_co2, right_co2, bank_check_max, p)
-      nox_variance = bank_variance(left_nox, right_nox)
-      co2_variance = bank_variance(left_co2, right_co2)
-      if nox_variance > bank_check_max || co2_variance > bank_check_max
-        { status: 'warning', message: p['Message_check_left_right_bank_performance'] || 'Check Left/Right Bank Performance' }
+    # --- NOx ---
+    rated_nox = engine_config&.nox.to_f
+    left_nox  = input.nox_left.to_f
+    right_nox = input.nox_right.to_f
+
+    sections[:nox] = {}
+    if rated_nox > 0 && left_nox > 0
+      variance = (left_nox - rated_nox) / rated_nox
+      sections[:nox][:left] = if variance < very_low_nox
+        { status: 'warning', message: "Warning - Very Low NOx (#{left_nox.to_i} vs #{rated_nox.to_i} rated)", value: left_nox }
+      elsif variance < low_nox
+        { status: 'caution', message: "Caution - Low NOx (#{left_nox.to_i} vs #{rated_nox.to_i} rated)", value: left_nox }
+      elsif variance > nox_upper_max
+        { status: 'caution', message: "Elevated NOx (#{left_nox.to_i} vs #{rated_nox.to_i} rated)", value: left_nox }
       else
-        { status: 'ok', message: 'OK' }
+        { status: 'ok', message: "NOx within spec: #{left_nox.to_i}", value: left_nox }
+      end
+    else
+      sections[:nox][:left] = { status: 'unknown', message: 'NOx left bank data unavailable', value: left_nox > 0 ? left_nox : nil }
+    end
+
+    if rated_nox > 0 && right_nox > 0
+      variance = (right_nox - rated_nox) / rated_nox
+      sections[:nox][:right] = if variance < very_low_nox
+        { status: 'warning', message: "Warning - Very Low NOx (#{right_nox.to_i} vs #{rated_nox.to_i} rated)", value: right_nox }
+      elsif variance < low_nox
+        { status: 'caution', message: "Caution - Low NOx (#{right_nox.to_i} vs #{rated_nox.to_i} rated)", value: right_nox }
+      elsif variance > nox_upper_max
+        { status: 'caution', message: "Elevated NOx (#{right_nox.to_i} vs #{rated_nox.to_i} rated)", value: right_nox }
+      else
+        { status: 'ok', message: "NOx within spec: #{right_nox.to_i}", value: right_nox }
+      end
+    else
+      sections[:nox][:right] = { status: 'unknown', message: 'NOx right bank data unavailable', value: right_nox > 0 ? right_nox : nil }
+    end
+
+    # --- Bank Balance ---
+    if left_co2 > 0 && right_co2 > 0
+      avg = (left_co2 + right_co2) / 2.0
+      variance = avg > 0 ? (left_co2 - right_co2).abs / avg : 0
+      sections[:bank_balance] = if variance > bank_check_max
+        { status: 'warning', message: "Bank imbalance detected: #{(variance * 100).round(1)}% CO2 variance", value: variance }
+      else
+        { status: 'ok', message: "Banks balanced within spec", value: variance }
       end
     end
 
-    def bank_variance(left, right)
-      avg = (left + right) / 2.0
-      return 0 if avg.zero?
-      (left - right).abs / avg
-    end
+    # --- Overall Status ---
+    all_statuses = sections.values.flat_map { |v| v.is_a?(Hash) && v[:status] ? [v[:status]] : v.values.map { |s| s[:status] } rescue [] }
+    overall = if all_statuses.include?('warning') then 'warning'
+               elsif all_statuses.include?('caution') then 'caution'
+               else 'ok' end
 
+    render json: {
+      input_id:      input.id,
+      vehicle_code:  input.vehicle&.code,
+      submitted:     input.created_at&.strftime('%Y-%m-%d'),
+      engine_hours:  hours > 0 ? hours : nil,
+      test_type:     input.test_type || 'manual',
+      overall_status: overall,
+      sections:      sections
+    }
+
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Input not found' }, status: :not_found
+  rescue => e
+    render json: { error: e.message }, status: :internal_server_error
   end
 end
