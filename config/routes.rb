@@ -8,8 +8,8 @@ Rails.application.routes.draw do
       end
     end
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
+    get 'admin/reprocess_outputs', to: 'admin#reprocess_outputs'
   end
-
   devise_for :users,
     skip: [:registrations],
     path_names: { sign_in: 'login', sign_out: 'logout' },
