@@ -1,9 +1,8 @@
 class DiagnosticService
   def self.calculate_status(input)
-    engine_config = input.engine_config
+    engine_config = input.vehicle&.engine_config
     return "unknown" unless engine_config
 
-    # Load thresholds from parameters table
     def self.param(name, default)
       p = Parameter.find_by(name: name)
       p ? p.value.to_f : default
@@ -20,9 +19,19 @@ class DiagnosticService
 
     issues = []
 
+    # Average left + right banks
+    co2_vals = [input.left_bank_co2_percent, input.right_bank_co2_percent].compact
+    co_vals  = [input.left_bank_co, input.right_bank_co].compact
+    nox_vals = [input.left_bank_nox, input.right_bank_nox].compact
+    rpm_val  = input.engine_rpm
+
+    avg_co2 = co2_vals.sum / co2_vals.size if co2_vals.any?
+    avg_co  = co_vals.sum  / co_vals.size  if co_vals.any?
+    avg_nox = nox_vals.sum / nox_vals.size if nox_vals.any?
+
     # CO2 check
-    if engine_config.baseline_co2_pct.present? && input.co2_pct.present?
-      delta = (input.co2_pct.to_f - engine_config.baseline_co2_pct.to_f) / engine_config.baseline_co2_pct.to_f
+    if avg_co2 && engine_config.baseline_co2_pct.present?
+      delta = (avg_co2 - engine_config.baseline_co2_pct.to_f) / engine_config.baseline_co2_pct.to_f
       if delta > high_co2_pct
         issues << "critical"
       elsif delta > elevated_co2_pct
@@ -31,8 +40,8 @@ class DiagnosticService
     end
 
     # CO check
-    if engine_config.baseline_co.present? && input.co.present?
-      ratio = input.co.to_f / engine_config.baseline_co.to_f
+    if avg_co && engine_config.baseline_co.present?
+      ratio = avg_co / engine_config.baseline_co.to_f
       if ratio > (1 + high_co)
         issues << "critical"
       elsif ratio > (1 + elevated_co)
@@ -41,8 +50,8 @@ class DiagnosticService
     end
 
     # NOx check
-    if engine_config.baseline_nox.present? && input.nox.present?
-      delta = (input.nox.to_f - engine_config.baseline_nox.to_f) / engine_config.baseline_nox.to_f
+    if avg_nox && engine_config.baseline_nox.present?
+      delta = (avg_nox - engine_config.baseline_nox.to_f) / engine_config.baseline_nox.to_f
       if delta < very_low_nox
         issues << "critical"
       elsif delta < low_nox
@@ -51,14 +60,12 @@ class DiagnosticService
     end
 
     # RPM check
-    if engine_config.rated_rpm.present? && input.rpm.present?
-      delta = (input.rpm.to_f - engine_config.rated_rpm.to_f) / engine_config.rated_rpm.to_f
-      if delta > rpm_max || delta < rpm_min
-        issues << "marginal"
-      end
+    if rpm_val && engine_config.rated_rpm.present?
+      delta = (rpm_val.to_f - engine_config.rated_rpm.to_f) / engine_config.rated_rpm.to_f
+      issues << "marginal" if delta > rpm_max || delta < rpm_min
     end
 
-    return "unknown" if issues.empty? && !input.co2_pct.present? && !input.co.present?
+    return "unknown" if issues.empty? && avg_co2.nil? && avg_co.nil?
     return "critical" if issues.include?("critical")
     return "marginal" if issues.include?("marginal")
     "in_spec"
