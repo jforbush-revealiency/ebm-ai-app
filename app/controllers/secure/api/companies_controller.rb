@@ -1,49 +1,49 @@
-class Secure::Api::CompaniesController < Secure::Api::ApiController
-  respond_to :json
+module Secure
+  module Api
+    class CompaniesController < ApplicationController
+      before_action :authenticate_user!
+      before_action :require_admin
 
-  load_and_authorize_resource
+      def index
+        companies = Company.includes(:locations).all.order(:name)
+        render json: companies.map { |company|
+          {
+            id: company.id,
+            code: company.code,
+            description: company.description,
+            active: company.active,
+            locations: company.locations.order(:name).map { |loc|
+              {
+                id: loc.id,
+                code: loc.code,
+                description: loc.description,
+                active: loc.active,
+                company_id: loc.company_id
+              }
+            }
+          }
+        }
+      end
 
-  def index
-    data = Company.all.order("code")
-    render json: data
-  end
+      def update
+        company = Company.find(params[:id])
+        if company.update(company_params)
+          render json: {
+            id: company.id,
+            code: company.code,
+            description: company.description,
+            active: company.active
+          }
+        else
+          render json: { errors: company.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
 
-  def show
-    data = Company.find(params[:id]) 
-    render json: data
-  end
+      private
 
-  def create
-    data = Company.new(data_params)
-    if data.save       
-      render json: data, status: :created
-    else
-      render json: data.errors, status: :unprocessable_entity
+      def company_params
+        params.require(:company).permit(:description, :active)
+      end
     end
-  end
-
-  def update
-    data = Company.find(params[:id])
-    if data.update(data_params)
-      render json: data
-    else
-      render json: data.errors, status: :unprocessable_entity
-    end
-  end
-
-  def destroy
-    data = Company.find(params[:id])
-    if data.destroy
-      head :no_content
-    else
-      render json: data.errors, status: :unprocessable_entity
-    end
-  end
-
-  private
-  # Never trust parameters from the scary internet, only allow the white list through.
-  def data_params
-    params.require(:data).permit(:id, attributes: [:code, :description, :average_diesel_fuel, :location_id, location_attributes: [
-                                              :code, :description, :attainment]])
   end
 end
