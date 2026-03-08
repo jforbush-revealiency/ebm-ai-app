@@ -4,7 +4,7 @@ class DiagnosticService
     return "unknown" unless engine_config
 
     def self.param(name, default)
-      p = Parameter.find_by(name: name)
+      p = Parameter.find_by(code: name)
       p ? p.value.to_f : default
     end
 
