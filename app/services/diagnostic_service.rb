@@ -30,8 +30,8 @@ class DiagnosticService
     avg_nox = nox_vals.sum / nox_vals.size if nox_vals.any?
 
     # CO2 check
-    if avg_co2 && engine_config.baseline_co2_pct.present?
-      delta = (avg_co2 - engine_config.baseline_co2_pct.to_f) / engine_config.baseline_co2_pct.to_f
+    if avg_co2 && engine_config.co2_percent.present?
+      delta = (avg_co2 - engine_config.co2_percent.to_f) / engine_config.co2_percent.to_f
       if delta > high_co2_pct
         issues << "critical"
       elsif delta > elevated_co2_pct
