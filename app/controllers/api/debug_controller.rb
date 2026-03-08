@@ -13,4 +13,8 @@ class Api::DebugController < ApplicationController
     end
     render json: configs
   end
-end  
+
+  def parameters
+    render json: Parameter.all.map { |p| { id: p.id, code: p.code, value: p.value } }
+  end
+end
