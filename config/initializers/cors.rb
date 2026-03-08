@@ -1,14 +1,13 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "https://reportgarden-pro.lovable.app",
-            "https://lovable.dev",
-            "http://localhost:3000",
-            "http://localhost:5173"
+    origins 'localhost:3000',
+            'localhost:8080',
+            /\.lovableproject\.com$/,
+            'dieselenginetech.lovable.app',
+            'reportgarden-pro.lovable.app'
 
-    resource "*",
+    resource '*',
       headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: true,
-      expose: ["Authorization"]
+      methods: [:get, :post, :put, :patch, :delete, :options, :head]
   end
 end
