@@ -1,37 +1,16 @@
 module Api
   class CompaniesController < ApplicationController
     def index
-      companies = Company.includes(:locations).all.order(:name)
-      render json: companies.map { |company|
-        {
-          id: company.id,
-          code: company.code,
-          name: company.description || company.code,
-          description: company.description,
-          active: company.active,
-          locations: company.locations.order(:name).map { |loc|
-            {
-              id: loc.id,
-              code: loc.code,
-              description: loc.description,
-              active: loc.active,
-              company_id: loc.company_id
-            }
-          }
-        }
+      companies = Company.includes(:locations).all.order(:code)
+      render json: companies.map { |c|
+        c.as_json.merge(locations: c.locations.as_json)
       }
     end
 
     def update
       company = Company.find(params[:id])
       if company.update(company_params)
-        render json: {
-          id: company.id,
-          code: company.code,
-          name: company.description || company.code,
-          description: company.description,
-          active: company.active
-        }
+        render json: company.as_json
       else
         render json: { errors: company.errors.full_messages }, status: :unprocessable_entity
       end
@@ -40,7 +19,7 @@ module Api
     private
 
     def company_params
-      params.require(:company).permit(:description, :active)
+      params.require(:company).permit!
     end
   end
 end
