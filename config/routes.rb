@@ -11,6 +11,7 @@ Rails.application.routes.draw do
     end
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
     get 'debug/engine_configs',  to: 'debug#engine_configs'
+    get 'debug/parameters',      to: 'debug#parameters'
   end
 
   devise_for :users,
