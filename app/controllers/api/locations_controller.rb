@@ -1,29 +1,13 @@
 module Api
   class LocationsController < ApplicationController
     def index
-      locations = Location.includes(:company).all.order(:name)
-      render json: locations.map { |loc|
-        {
-          id: loc.id,
-          code: loc.code,
-          description: loc.description,
-          active: loc.active,
-          company_id: loc.company_id,
-          company_name: loc.company&.description
-        }
-      }
+      render json: Location.includes(:company).all.order(:code).as_json
     end
 
     def create
-      location = Location.new(location_params)
+      location = Location.new(params.require(:location).permit!)
       if location.save
-        render json: {
-          id: location.id,
-          code: location.code,
-          description: location.description,
-          active: location.active,
-          company_id: location.company_id
-        }, status: :created
+        render json: location.as_json, status: :created
       else
         render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
       end
@@ -31,23 +15,11 @@ module Api
 
     def update
       location = Location.find(params[:id])
-      if location.update(location_params)
-        render json: {
-          id: location.id,
-          code: location.code,
-          description: location.description,
-          active: location.active,
-          company_id: location.company_id
-        }
+      if location.update(params.require(:location).permit!)
+        render json: location.as_json
       else
         render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
       end
-    end
-
-    private
-
-    def location_params
-      params.require(:location).permit(:code, :description, :active, :company_id)
     end
   end
 end
