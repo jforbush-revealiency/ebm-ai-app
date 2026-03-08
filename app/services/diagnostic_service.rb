@@ -40,8 +40,8 @@ class DiagnosticService
     end
 
     # CO check
-    if avg_co && engine_config.baseline_co.present?
-      ratio = avg_co / engine_config.baseline_co.to_f
+    if avg_co && engine_config.co.present?
+      ratio = avg_co / engine_config.co.to_f
       if ratio > (1 + high_co)
         issues << "critical"
       elsif ratio > (1 + elevated_co)
@@ -50,8 +50,8 @@ class DiagnosticService
     end
 
     # NOx check
-    if avg_nox && engine_config.baseline_nox.present?
-      delta = (avg_nox - engine_config.baseline_nox.to_f) / engine_config.baseline_nox.to_f
+    if avg_nox && engine_config.nox.present?
+      delta = (avg_nox - engine_config.nox.to_f) / engine_config.nox.to_f
       if delta < very_low_nox
         issues << "critical"
       elsif delta < low_nox
