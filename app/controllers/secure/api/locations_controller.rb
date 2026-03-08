@@ -1,53 +1,64 @@
-class Secure::Api::LocationsController < Secure::Api::ApiController
-  respond_to :json
+module Secure
+  module Api
+    class LocationsController < ApplicationController
+      before_action :authenticate_user!
+      before_action :require_admin
 
-  load_and_authorize_resource
+      def index
+        locations = Location.includes(:company).all.order(:name)
+        render json: locations.map { |loc|
+          {
+            id: loc.id,
+            code: loc.code,
+            description: loc.description,
+            active: loc.active,
+            company_id: loc.company_id,
+            company_name: loc.company&.description
+          }
+        }
+      end
 
-  def index
-    unless params["company_id"].blank?
-      data = Location.accessible_by(current_ability).includes(:company).
-        where("company_id = ?", params["company_id"]).order("companies.code, locations.code")
-    else
-      data = Location.accessible_by(current_ability).includes(:company).all.order("companies.code, locations.code")
+      def create
+        location = Location.new(location_params)
+        if location.save
+          render json: {
+            id: location.id,
+            code: location.code,
+            description: location.description,
+            active: location.active,
+            company_id: location.company_id
+          }, status: :created
+        else
+          render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      def update
+        location = Location.find(params[:id])
+        if location.update(location_params)
+          render json: {
+            id: location.id,
+            code: location.code,
+            description: location.description,
+            active: location.active,
+            company_id: location.company_id
+          }
+        else
+          render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      def destroy
+        location = Location.find(params[:id])
+        location.destroy
+        render json: { message: "Location deleted" }
+      end
+
+      private
+
+      def location_params
+        params.require(:location).permit(:code, :description, :active, :company_id)
+      end
     end
-    render json: data
-  end
-
-  def show
-    data = Location.accessible_by(current_ability).find(params[:id]) 
-    render json: data
-  end
-
-  def create
-    data = Location.new(data_params)
-    if data.save       
-      render json: data, status: :created
-    else
-      render json: data.errors, status: :unprocessable_entity
-    end
-  end
-
-  def update
-    data = Location.find(params[:id])
-    if data.update(data_params)
-      render json: data
-    else
-      render json: data.errors, status: :unprocessable_entity
-    end
-  end
-
-  def destroy
-    data = Location.find(params[:id])
-    if data.destroy
-      head :no_content
-    else
-      render json: data.errors, status: :unprocessable_entity
-    end
-  end
-
-  private
-  # Never trust parameters from the scary internet, only allow the white list through.
-  def data_params
-    params.require(:data).permit(attributes: [:code, :description, :company_id, :attainment])
   end
 end
