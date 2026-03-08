@@ -50,32 +50,34 @@ namespace :import do
         rescue
           Date.today
         end
-        input = Input.new(
-          submitter_first_name:   'Import',
-          submitter_last_name:    'User',
-          submitter_email:        'imports@ebmpros.com',
-          submitted:              test_date.to_datetime,
-          company_code:           company.code,
-          location_code:          location.code,
-          vehicle_code:           vehicle_serial,
-          location:               location,
-          vehicle:                vehicle,
-          user:                   import_user,
-          engine_hours:           row['Engine Hours'].to_f,
-          engine_rpm:             row['Engine RPM'].to_f,
-          alternator_rpm:         row['Alternator RPM'].to_f,
-          engine_hp:              row['Engine HP'].to_f,
-          alternator_hp:          row['Alternator HP'].to_f,
-          left_bank_co2_percent:  row['Left-CO2%'].to_f,
-          left_bank_co:           row['Left-CO'].to_f,
-          left_bank_nox:          row['Left-NOx'].to_f,
-          right_bank_co2_percent: row['Right-CO2%'].to_f,
-          right_bank_co:          row['Right-CO'].to_f,
-          right_bank_nox:         row['Right-NOX'].to_f,
-          has_engine_codes:       false,
-          auto_generated:         true,
-          test_type:              'manual'
-        )
+        input = Input.find_or_initialize_by(
+          vehicle:   vehicle,
+          submitted: test_date.to_datetime
+        ) do |i|
+          i.submitter_first_name   = 'Import'
+          i.submitter_last_name    = 'User'
+          i.submitter_email        = 'imports@ebmpros.com'
+          i.company_code           = company.code
+          i.location_code          = location.code
+          i.vehicle_code           = vehicle_serial
+          i.location               = location
+          i.user                   = import_user
+          i.engine_hours           = row['Engine Hours'].to_f
+          i.engine_rpm             = row['Engine RPM'].to_f
+          i.alternator_rpm         = row['Alternator RPM'].to_f
+          i.engine_hp              = row['Engine HP'].to_f
+          i.alternator_hp          = row['Alternator HP'].to_f
+          i.left_bank_co2_percent  = row['Left-CO2%'].to_f
+          i.left_bank_co           = row['Left-CO'].to_f
+          i.left_bank_nox          = row['Left-NOx'].to_f
+          i.right_bank_co2_percent = row['Right-CO2%'].to_f
+          i.right_bank_co          = row['Right-CO'].to_f
+          i.right_bank_nox         = row['Right-NOX'].to_f
+          i.has_engine_codes       = false
+          i.auto_generated         = true
+          i.test_type              = 'manual'
+        end
+        next if input.persisted?
         input.save(validate: false)
         begin
           Output.process_input(input)
