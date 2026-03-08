@@ -7,16 +7,17 @@ class Api::DiagnosticController < ApplicationController
     params_hash = Parameter.all.index_by(&:code)
     thresh = ->(code, default) { params_hash[code]&.value&.to_f || default }
 
-    bank_check_max = thresh.('Bank_Check_Max', 0.2)
-    elevated_co    = thresh.('Elevated_CO', 2.0)
-    high_co        = thresh.('High_CO', 3.0)
-    high_co2_pct   = thresh.('High_CO2_Percentage', 0.05)
-    low_nox        = thresh.('Low_NOx', -0.20)
-    very_low_nox   = thresh.('Very_Low_NOx', -0.25)
-    nox_upper_max  = thresh.('Nox_Upper_Max', 0.2)
+    bank_check_max = thresh.('Bank_Check_Max', 0.20)
+    elevated_co    = thresh.('Elevated_CO',    2.0)
+    high_co        = thresh.('High_CO',        3.0)
+    high_co2_pct   = thresh.('High_CO2_Percentage', 0.25)   # widened from 0.05 → 0.25 (25%)
+    low_nox        = thresh.('Low_NOx',       -0.25)
+    very_low_nox   = thresh.('Very_Low_NOx',  -0.35)
+    nox_upper_max  = thresh.('Nox_Upper_Max',  0.30)
 
     sections = {}
 
+    # Engine hours
     hours = input.engine_hours.to_f
     sections[:engine_hours] = if hours > 0
       { status: 'ok', message: 'Engine hours recorded', value: hours }
@@ -24,6 +25,7 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'Engine hours not recorded', value: nil }
     end
 
+    # RPM
     rated_rpm  = engine_config&.rated_rpm.to_f
     actual_rpm = input.engine_rpm.to_f
     sections[:rpm] = if rated_rpm > 0 && actual_rpm > 0
@@ -37,6 +39,7 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'RPM data unavailable', value: actual_rpm > 0 ? actual_rpm : nil }
     end
 
+    # HP
     rated_hp  = engine_config&.rated_hp.to_f
     actual_hp = input.engine_hp.to_f
     sections[:hp] = if rated_hp > 0 && actual_hp > 0
@@ -45,6 +48,7 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'HP data unavailable', value: actual_hp > 0 ? actual_hp : nil }
     end
 
+    # CO2
     rated_co2 = engine_config&.co2_percent.to_f
     left_co2  = input.left_bank_co2_percent.to_f
     right_co2 = input.right_bank_co2_percent.to_f
@@ -52,8 +56,10 @@ class Api::DiagnosticController < ApplicationController
     sections[:co2] = {}
     if rated_co2 > 0 && left_co2 > 0
       variance = (left_co2 - rated_co2) / rated_co2
-      sections[:co2][:left] = if variance.abs > high_co2_pct
-        { status: 'warning', message: "CO2 out of spec: #{left_co2}% vs #{rated_co2}% rated", value: left_co2 }
+      sections[:co2][:left] = if variance < -high_co2_pct
+        { status: 'warning', message: "CO2 low: #{left_co2}% vs #{rated_co2}% rated (#{(variance * 100).round(1)}%)", value: left_co2 }
+      elsif variance > high_co2_pct
+        { status: 'warning', message: "CO2 high: #{left_co2}% vs #{rated_co2}% rated (#{(variance * 100).round(1)}%)", value: left_co2 }
       else
         { status: 'ok', message: "CO2 within spec: #{left_co2}%", value: left_co2 }
       end
@@ -63,8 +69,10 @@ class Api::DiagnosticController < ApplicationController
 
     if rated_co2 > 0 && right_co2 > 0
       variance = (right_co2 - rated_co2) / rated_co2
-      sections[:co2][:right] = if variance.abs > high_co2_pct
-        { status: 'warning', message: "CO2 out of spec: #{right_co2}% vs #{rated_co2}% rated", value: right_co2 }
+      sections[:co2][:right] = if variance < -high_co2_pct
+        { status: 'warning', message: "CO2 low: #{right_co2}% vs #{rated_co2}% rated (#{(variance * 100).round(1)}%)", value: right_co2 }
+      elsif variance > high_co2_pct
+        { status: 'warning', message: "CO2 high: #{right_co2}% vs #{rated_co2}% rated (#{(variance * 100).round(1)}%)", value: right_co2 }
       else
         { status: 'ok', message: "CO2 within spec: #{right_co2}%", value: right_co2 }
       end
@@ -72,6 +80,7 @@ class Api::DiagnosticController < ApplicationController
       sections[:co2][:right] = { status: 'unknown', message: 'CO2 right bank unavailable', value: right_co2 > 0 ? right_co2 : nil }
     end
 
+    # CO
     rated_co = engine_config&.co.to_f
     left_co  = input.left_bank_co.to_f
     right_co = input.right_bank_co.to_f
@@ -103,6 +112,7 @@ class Api::DiagnosticController < ApplicationController
       sections[:co][:right] = { status: 'unknown', message: 'CO right bank unavailable', value: right_co > 0 ? right_co : nil }
     end
 
+    # NOx
     rated_nox = engine_config&.nox.to_f
     left_nox  = input.left_bank_nox.to_f
     right_nox = input.right_bank_nox.to_f
@@ -138,6 +148,7 @@ class Api::DiagnosticController < ApplicationController
       sections[:nox][:right] = { status: 'unknown', message: 'NOx right bank unavailable', value: right_nox > 0 ? right_nox : nil }
     end
 
+    # Bank balance
     if left_co2 > 0 && right_co2 > 0
       avg = (left_co2 + right_co2) / 2.0
       variance = avg > 0 ? (left_co2 - right_co2).abs / avg : 0
@@ -146,11 +157,20 @@ class Api::DiagnosticController < ApplicationController
         { status: 'ok', message: "Banks balanced within spec", value: variance }
     end
 
+    # Overall status
     all_statuses = sections.values.flat_map { |v|
       v.is_a?(Hash) && v.key?(:status) ? [v[:status]] : v.values.map { |s| s[:status] rescue nil }.compact
-    }
-    overall = all_statuses.include?('warning') ? 'warning' :
-              all_statuses.include?('caution') ? 'caution' : 'ok'
+    }.reject { |s| s == 'unknown' }
+
+    overall = if all_statuses.include?('warning')
+      'warning'
+    elsif all_statuses.include?('caution')
+      'caution'
+    elsif all_statuses.any?
+      'ok'
+    else
+      'unknown'
+    end
 
     render json: {
       input_id:       input.id,
