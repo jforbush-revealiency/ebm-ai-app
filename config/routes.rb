@@ -1,7 +1,5 @@
 require 'public_api_constraints'
-
 Rails.application.routes.draw do
-
   namespace :api do
     resources :vehicles, only: [:index] do
       member do
@@ -9,22 +7,21 @@ Rails.application.routes.draw do
         get :daily_reports
       end
     end
+    resources :companies, only: [:index, :update]
+    resources :locations, only: [:index, :create, :update]
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
     get 'debug/engine_configs',  to: 'debug#engine_configs'
     get 'debug/parameters',      to: 'debug#parameters'
   end
-
   devise_for :users,
     skip: [:registrations],
     path_names: { sign_in: 'login', sign_out: 'logout' },
     path_prefix: 'secure'
-
   devise_scope :user do
     get  '/secure/api/current_user'                 => 'users/sessions#show_current_user'
     post 'secure/api/check/is_user'                 => 'users/users#is_user', as: 'is_user'
     put  '/secure/api/current_user/change_password' => 'users/users#change_password'
   end
-
   namespace :secure do
     root to: "home#index"
     namespace :api do
@@ -53,7 +50,5 @@ Rails.application.routes.draw do
       end
     end
   end
-
   root to: "home#index"
-
 end
