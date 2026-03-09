@@ -7,7 +7,7 @@ Rails.application.routes.draw do
         get :daily_reports
       end
     end
-    resources :companies, only: [:index, :create, :update]
+    resources :companies, only: [:index, :create, :update, :destroy]
     resources :locations, only: [:index, :create, :update]
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
     get 'debug/engine_configs',  to: 'debug#engine_configs'
