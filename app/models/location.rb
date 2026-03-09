@@ -5,7 +5,7 @@ class Location < ApplicationRecord
   has_many :users, dependent: :restrict_with_error
 
   validates :code, presence: true
-  validates_uniqueness_of :code
+  validates_uniqueness_of :code, case_sensitive: false
 
   def company_code
     "#{company.code}"
