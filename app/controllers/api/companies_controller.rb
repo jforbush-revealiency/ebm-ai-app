@@ -21,5 +21,15 @@ module Api
         render json: { errors: company.errors.full_messages }, status: :unprocessable_entity
       end
     end
+
+    def destroy
+      company = Company.find(params[:id])
+      if company.locations.any?
+        render json: { errors: ["Cannot delete a company that has sites. Remove all sites first."] }, status: :unprocessable_entity
+      else
+        company.destroy
+        render json: { success: true }
+      end
+    end
   end
 end
