@@ -1,12 +1,7 @@
 module Api
   class UsersController < ApplicationController
     def index
-      users = User.includes(:company).all.order(:email)
-      render json: users.map { |u|
-        u.as_json.merge(
-          company_name: u.company&.description || u.company&.code
-        )
-      }
+      render json: User.all.order(:email).as_json
     end
 
     def create
