@@ -14,10 +14,14 @@ module Api
     end
 
     def update
+      Rails.logger.info "=== LOCATION UPDATE === params: #{params.inspect}"
       location = Location.find(params[:id])
-      if location.update(params.require(:location).permit!)
+      location_params = params.require(:location).permit!
+      Rails.logger.info "=== LOCATION UPDATE === location_params: #{location_params.inspect}"
+      if location.update(location_params)
         render json: location.as_json
       else
+        Rails.logger.info "=== LOCATION UPDATE === errors: #{location.errors.full_messages.inspect}"
         render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
       end
     end
