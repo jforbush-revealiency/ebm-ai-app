@@ -25,8 +25,23 @@ class Api::VehiclesController < ApplicationController
       last_diagnostic_status: vehicle.try(:last_diagnostic_status),
       last_test_date: vehicle.try(:last_test_date),
       company: vehicle.try(:company_code),
-      inputs: Input.where(vehicle_id: vehicle.id).order(submitted: :desc).limit(10).map { |i|
-        { id: i.id, submitted: i.submitted, engine_hours: i.engine_hours }
+      location: vehicle.try(:location_code),
+      inputs: Input.where(vehicle_id: vehicle.id).order(submitted: :desc).limit(50).map { |i|
+        {
+          id:                    i.id,
+          submitted:             i.submitted&.strftime("%Y-%m-%d"),
+          engine_hours:          i.engine_hours,
+          engine_rpm:            i.engine_rpm,
+          test_type:             i.test_type,
+          overall_status:        i.try(:last_diagnostic_status),
+          last_diagnostic_status: i.try(:last_diagnostic_status),
+          left_bank_co2_percent: i.left_bank_co2_percent,
+          right_bank_co2_percent: i.right_bank_co2_percent,
+          left_bank_co:          i.left_bank_co,
+          right_bank_co:         i.right_bank_co,
+          left_bank_nox:         i.left_bank_nox,
+          right_bank_nox:        i.right_bank_nox
+        }
       }
     }
   end
