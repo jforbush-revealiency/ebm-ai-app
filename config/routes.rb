@@ -1,16 +1,19 @@
 require 'public_api_constraints'
 Rails.application.routes.draw do
   namespace :api do
-    resources :vehicles, only: [:index, :update] do
+    resources :vehicles, only: [:index, :show, :create, :update, :destroy] do
       member do
         get :emission_tests
         get :daily_reports
       end
     end
-    resources :companies, only: [:index, :create, :update, :destroy]
-    resources :locations, only: [:index, :create, :update]
-    resources :users, only: [:index, :create, :update]
-    resources :engine_configs, only: [:update]
+    resources :companies, only: [:index, :show, :create, :update, :destroy]
+    resources :locations, only: [:index, :show, :create, :update, :destroy]
+    resources :users, only: [:index, :show, :create, :update]
+    resources :engine_configs, only: [:index, :show, :create, :update]
+    resources :parameters, only: [:index, :show, :update]
+    resources :engines, only: [:index, :show, :update]
+    resources :manufacturers, only: [:index, :show]
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
     get 'debug/engine_configs', to: 'debug#engine_configs'
     get 'debug/parameters', to: 'debug#parameters'
