@@ -45,4 +45,16 @@ class Api::VehiclesController < ApplicationController
       }
     }
   end
+
+  def update
+    vehicle = Vehicle.find(params[:id])
+    attrs = params[:vehicle] || params[:attributes] || {}
+    allowed = attrs.permit(:description, :model_number, :location_id, :company_id,
+                           :code, :serial_number, :engine_config_id)
+    if vehicle.update(allowed)
+      render json: { id: vehicle.id, description: vehicle.description, code: vehicle.code }
+    else
+      render json: { errors: vehicle.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
 end
