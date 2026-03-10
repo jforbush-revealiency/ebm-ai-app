@@ -44,4 +44,71 @@ namespace :import do
         engine_config.rated_rpm      ||= row['Engine RPM'].to_f
         engine_config.rated_hp       ||= row['Engine HP'].to_f
         engine_config.is_real_values ||= false
-        engin
+        engine_config.save(validate: false)
+
+        vehicle_serial = row['Vehicle Serial #'].to_s.strip
+        vehicle = Vehicle.find_or_initialize_by(folder_code: vehicle_serial)
+        vehicle.description   ||= row['Vehicle #'].to_s.strip
+        vehicle.model_number  ||= row['Vehicle Model'].to_s.strip
+        vehicle.location      ||= location
+        vehicle.engine_config ||= engine_config
+        vehicle.save(validate: false)
+
+        test_date = begin
+          Date.strptime(row['Test Date'].to_s.strip, '%m/%d/%Y')
+        rescue
+          Date.today
+        end
+
+        input = Input.find_or_initialize_by(vehicle: vehicle, submitted: test_date.to_datetime)
+
+        if input.persisted?
+          skip_count += 1
+          next
+        end
+
+        input.submitter_first_name   = 'Import'
+        input.submitter_last_name    = 'User'
+        input.submitter_email        = 'imports@ebmpros.com'
+        input.company_code           = company.code
+        input.location_code          = location.code
+        input.vehicle_code           = vehicle_serial
+        input.location               = location
+        input.user                   = import_user
+        input.engine_hours           = row['Engine Hours'].to_f
+        input.engine_rpm             = row['Engine RPM'].to_f
+        input.alternator_rpm         = row['Alternator RPM'].to_f
+        input.engine_hp              = row['Engine HP'].to_f
+        input.alternator_hp          = row['Alternator HP'].to_f
+        input.left_bank_co2_percent  = row['Left-CO2%'].to_f
+        input.left_bank_co           = row['Left-CO'].to_f
+        input.left_bank_nox          = row['Left-NOx'].to_f
+        input.right_bank_co2_percent = row['Right-CO2%'].to_f
+        input.right_bank_co          = row['Right-CO'].to_f
+        input.right_bank_nox         = row['Right-NOX'].to_f
+        input.has_engine_codes       = false
+        input.auto_generated         = true
+        input.test_type              = 'manual'
+        input.save(validate: false)
+
+        begin
+          Output.process_input(input)
+        rescue => e
+          errors << "Output error row #{$.}: #{e.message}"
+        end
+
+        success_count += 1
+
+      rescue => e
+        error_count += 1
+        errors << "Row #{$.}: #{e.message}"
+      end
+    end
+
+    puts "\n=== Import Complete ==="
+    puts "Imported: #{success_count}"
+    puts "Skipped:  #{skip_count} (already in database)"
+    puts "Errors:   #{error_count}" if error_count > 0
+    errors.first(10).each { |e| puts "  - #{e}" } if errors.any?
+  end
+end
