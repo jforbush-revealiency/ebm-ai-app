@@ -1,7 +1,7 @@
 require 'public_api_constraints'
 Rails.application.routes.draw do
   namespace :api do
-    resources :vehicles, only: [:index] do
+    resources :vehicles, only: [:index, :update] do
       member do
         get :emission_tests
         get :daily_reports
