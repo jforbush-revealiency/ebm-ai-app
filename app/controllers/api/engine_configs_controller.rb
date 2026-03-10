@@ -7,10 +7,10 @@ module Api
         :operating_rpm, :target_load
       )
 
-      # 'engine' column conflicts with belongs_to :engine association
-      # so we must write it directly to bypass the association setter
+      # Handle engine name separately — belongs_to :engine conflicts with the column
       if allowed.key?("engine")
-        config.write_attribute(:engine, allowed.delete("engine"))
+        engine_name = allowed.delete("engine")
+        config.update_columns(engine: engine_name)
       end
 
       if config.update(allowed)
