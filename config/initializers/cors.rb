@@ -3,9 +3,10 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     origins 'localhost:3000',
             'localhost:8080',
             /\.lovableproject\.com$/,
+            /\.lovable\.dev$/,
+            'lovable.dev',
             'dieselenginetech.lovable.app',
             'reportgarden-pro.lovable.app'
-
     resource '*',
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options, :head]
