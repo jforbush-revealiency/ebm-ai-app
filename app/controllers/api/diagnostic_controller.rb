@@ -2,7 +2,8 @@ class Api::DiagnosticController < ApplicationController
   def show
     id = params[:input_id] || params[:id]
     input = Input.find(id)
-    engine_config = input.vehicle&.engine_config
+    vehicle = input.vehicle
+    engine_config = vehicle&.engine_config
 
     params_hash = Parameter.all.index_by(&:code)
     thresh = ->(code, default) { params_hash[code]&.value&.to_f || default }
@@ -166,7 +167,11 @@ class Api::DiagnosticController < ApplicationController
 
     render json: {
       input_id:       input.id,
-      vehicle_code:   input.vehicle&.code,
+      vehicle:        vehicle&.description || vehicle&.code || 'Unknown Vehicle',
+      vehicle_code:   vehicle&.code,
+      company:        vehicle&.location&.company&.code,
+      location:       vehicle&.location&.code,
+      engine:         engine_config&.engine&.description || engine_config&.engine&.code,
       submitted:      input.submitted&.strftime('%Y-%m-%d'),
       engine_hours:   hours > 0 ? hours : nil,
       test_type:      input.test_type || 'manual',
