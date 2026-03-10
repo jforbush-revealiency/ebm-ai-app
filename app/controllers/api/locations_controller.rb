@@ -4,6 +4,11 @@ module Api
       render json: Location.includes(:company).all.order(:code).as_json
     end
 
+    def show
+      location = Location.find(params[:id])
+      render json: location.as_json
+    end
+
     def create
       location = Location.new(params.require(:location).permit!)
       if location.save
@@ -14,14 +19,14 @@ module Api
     end
 
     def update
-      Rails.logger.info "=== LOCATION UPDATE === params: #{params.inspect}"
       location = Location.find(params[:id])
-      location_params = params.require(:location).permit!
-      Rails.logger.info "=== LOCATION UPDATE === location_params: #{location_params.inspect}"
-      if location.update(location_params)
+      incoming = params.require(:location).permit!
+      # Preserve the existing code if the update payload doesn't include one.
+      # The Location model validates code presence/uniqueness — omitting it causes 422.
+      merged_params = { code: location.code }.merge(incoming.to_h)
+      if location.update(merged_params)
         render json: location.as_json
       else
-        Rails.logger.info "=== LOCATION UPDATE === errors: #{location.errors.full_messages.inspect}"
         render json: { errors: location.errors.full_messages }, status: :unprocessable_entity
       end
     end
