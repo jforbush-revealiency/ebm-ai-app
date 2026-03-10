@@ -1,5 +1,5 @@
 module Api
-  class EngineConfigsController < ApplicationController
+  class EngineConfigsController < BaseController
     def update
       config = EngineConfig.find(params[:id])
       if config.update(params.require(:engine_config).permit!)
