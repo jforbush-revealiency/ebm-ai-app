@@ -10,18 +10,19 @@ Rails.application.routes.draw do
     resources :companies, only: [:index, :create, :update, :destroy]
     resources :locations, only: [:index, :create, :update]
     resources :users, only: [:index, :create, :update]
+    resources :engine_configs, only: [:update]
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
-    get 'debug/engine_configs',  to: 'debug#engine_configs'
-    get 'debug/parameters',      to: 'debug#parameters'
+    get 'debug/engine_configs', to: 'debug#engine_configs'
+    get 'debug/parameters', to: 'debug#parameters'
   end
   devise_for :users,
     skip: [:registrations],
     path_names: { sign_in: 'login', sign_out: 'logout' },
     path_prefix: 'secure'
   devise_scope :user do
-    get  '/secure/api/current_user'                 => 'users/sessions#show_current_user'
-    post 'secure/api/check/is_user'                 => 'users/users#is_user', as: 'is_user'
-    put  '/secure/api/current_user/change_password' => 'users/users#change_password'
+    get '/secure/api/current_user' => 'users/sessions#show_current_user'
+    post 'secure/api/check/is_user' => 'users/users#is_user', as: 'is_user'
+    put '/secure/api/current_user/change_password' => 'users/users#change_password'
   end
   namespace :secure do
     root to: "home#index"
@@ -46,7 +47,7 @@ Rails.application.routes.draw do
         collection do
           post 'import_stat_file'
           post 'import_stat_all_files'
-          get  'export'
+          get 'export'
         end
       end
     end
