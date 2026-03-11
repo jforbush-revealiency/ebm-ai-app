@@ -16,6 +16,12 @@ class Api::DiagnosticController < ApplicationController
     very_low_nox   = thresh.('Very_Low_NOx',  -0.35)
     nox_upper_max  = thresh.('Nox_Upper_Max',  0.30)
 
+    rated_rpm  = engine_config&.rated_rpm.to_f
+    rated_hp   = engine_config&.rated_hp.to_f
+    rated_co2  = engine_config&.co2_percent.to_f
+    rated_co   = engine_config&.co.to_f
+    rated_nox  = engine_config&.nox.to_f
+
     sections = {}
 
     hours = input.engine_hours.to_f
@@ -25,7 +31,6 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'Engine hours not recorded', value: nil }
     end
 
-    rated_rpm  = engine_config&.rated_rpm.to_f
     actual_rpm = input.engine_rpm.to_f
     sections[:rpm] = if rated_rpm > 0 && actual_rpm > 0
       variance = (actual_rpm - rated_rpm) / rated_rpm
@@ -38,7 +43,6 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'RPM data unavailable', value: actual_rpm > 0 ? actual_rpm : nil }
     end
 
-    rated_hp  = engine_config&.rated_hp.to_f
     actual_hp = input.engine_hp.to_f
     sections[:hp] = if rated_hp > 0 && actual_hp > 0
       { status: 'ok', message: "HP within spec (#{actual_hp.to_i} / #{rated_hp.to_i} rated)", value: actual_hp }
@@ -46,7 +50,6 @@ class Api::DiagnosticController < ApplicationController
       { status: 'unknown', message: 'HP data unavailable', value: actual_hp > 0 ? actual_hp : nil }
     end
 
-    rated_co2 = engine_config&.co2_percent.to_f
     left_co2  = input.left_bank_co2_percent.to_f
     right_co2 = input.right_bank_co2_percent.to_f
 
@@ -77,7 +80,6 @@ class Api::DiagnosticController < ApplicationController
       sections[:co2][:right] = { status: 'unknown', message: 'CO2 right bank unavailable', value: right_co2 > 0 ? right_co2 : nil }
     end
 
-    rated_co = engine_config&.co.to_f
     left_co  = input.left_bank_co.to_f
     right_co = input.right_bank_co.to_f
 
@@ -108,7 +110,6 @@ class Api::DiagnosticController < ApplicationController
       sections[:co][:right] = { status: 'unknown', message: 'CO right bank unavailable', value: right_co > 0 ? right_co : nil }
     end
 
-    rated_nox = engine_config&.nox.to_f
     left_nox  = input.left_bank_nox.to_f
     right_nox = input.right_bank_nox.to_f
 
@@ -176,6 +177,13 @@ class Api::DiagnosticController < ApplicationController
       engine_hours:   hours > 0 ? hours : nil,
       test_type:      input.test_type || 'manual',
       overall_status: overall,
+      rated_baselines: {
+        co2_percent: rated_co2 > 0 ? rated_co2 : nil,
+        co:          rated_co > 0 ? rated_co : nil,
+        nox:         rated_nox > 0 ? rated_nox : nil,
+        rpm:         rated_rpm > 0 ? rated_rpm : nil,
+        hp:          rated_hp > 0 ? rated_hp : nil
+      },
       sections:       sections
     }
 
@@ -185,3 +193,27 @@ class Api::DiagnosticController < ApplicationController
     render json: { error: e.message }, status: :internal_server_error
   end
 end
+```
+
+Commit message: `Add rated_baselines to diagnostic API response`
+
+Then paste this into Lovable:
+```
+Update the Raw Emissions Data table on the diagnostic report page.
+The API now returns a rated_baselines object in the diagnostic response:
+{
+  rated_baselines: {
+    co2_percent: 9.2,
+    co: 300.0,
+    nox: 1020.0,
+    rpm: 1909.0,
+    hp: 2300.0
+  }
+}
+
+Use rated_baselines.co2_percent for the CO2 Rated Baseline column,
+rated_baselines.co for CO, and rated_baselines.nox for NOx.
+Calculate variance as: ((actual - rated) / rated * 100).
+If rated_baselines is missing or a value is null, show "—".
+Do NOT try to parse rated values from message text anymore.
+Give me the COMPLETE replacement file.
