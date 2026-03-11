@@ -34,13 +34,6 @@ class MergeDuplicateLocations < ActiveRecord::Migration[7.1]
     vehicle_count = Vehicle.where(location_id: remove.id).count
     Vehicle.where(location_id: remove.id).update_all(location_id: keep.id)
 
-    # Move all vehicles that reference by location_code
-    code_count = Vehicle.where(location_code: remove.code).count
-    Vehicle.where(location_code: remove.code).update_all(
-      location_code: keep.code,
-      location_id: keep.id
-    )
-
     # Move any inputs that reference the old location
     if Input.column_names.include?('location_id')
       Input.where(location_id: remove.id).update_all(location_id: keep.id)
@@ -57,6 +50,6 @@ class MergeDuplicateLocations < ActiveRecord::Migration[7.1]
     # Delete the now-empty duplicate
     remove.destroy!
 
-    Rails.logger.info "Merged location '#{remove.code}' (ID #{remove_id}) into '#{keep.code}' (ID #{keep_id}). Moved #{vehicle_count} vehicles by ID, #{code_count} by code. Final name: #{final_name}"
+    Rails.logger.info "Merged location (ID #{remove_id}) into '#{keep.code}' (ID #{keep_id}). Moved #{vehicle_count} vehicles. Final name: #{final_name}"
   end
 end
