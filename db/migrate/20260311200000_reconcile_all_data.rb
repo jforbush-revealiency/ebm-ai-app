@@ -3,7 +3,7 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     Rails.logger.info "=== Starting full data reconciliation ==="
 
     # =========================================================================
-    # 1. MANUFACTURERS — ensure all exist
+    # 1. MANUFACTURERS
     # =========================================================================
     manufacturers = {}
     [
@@ -14,20 +14,26 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       ['john-deere', 'John Deere'],
       ['komatsu', 'Komatsu'],
     ].each do |code, name|
-      m = Manufacturer.find_by(code: code)
-      unless m
-        # Try case-insensitive
-        m = Manufacturer.where("LOWER(code) = ?", code.downcase).first
-      end
-      unless m
-        m = Manufacturer.create!(code: code, description: name)
-      end
+      m = Manufacturer.find_by(code: code) || Manufacturer.where("LOWER(code) = ?", code.downcase).first
+      m ||= Manufacturer.new(code: code, description: name)
+      m.description = name
+      m.save!(validate: false)
       manufacturers[code] = m
       Rails.logger.info "Manufacturer: #{name} (ID #{m.id})"
     end
 
     # =========================================================================
-    # 2. ENGINES — ensure all exist with correct single_stack flag
+    # 1b. DRIVE TYPES — ensure a default exists
+    # =========================================================================
+    default_drive_type = DriveType.first
+    unless default_drive_type
+      default_drive_type = DriveType.new(code: 'mechanical', description: 'Mechanical')
+      default_drive_type.save!(validate: false)
+    end
+    Rails.logger.info "Default DriveType: #{default_drive_type.description} (ID #{default_drive_type.id})"
+
+    # =========================================================================
+    # 2. ENGINES
     # =========================================================================
     engines = {}
     [
@@ -45,21 +51,29 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       ['16V-4000', 'MTU 16V-4000', 'mtu', false],
       ['16V-4000-T4', 'MTU 16V-4000 Tier4', 'mtu', false],
     ].each do |code, desc, mfr_code, single|
-      e = Engine.find_by(code: code)
-      unless e
-        e = Engine.where("LOWER(code) = ?", code.downcase).first
-      end
+      e = Engine.find_by(code: code) || Engine.where("LOWER(code) = ?", code.downcase).first
       if e
-        e.update_columns(description: desc, manufacturer_id: manufacturers[mfr_code].id, is_single_stack: single)
+        e.update_columns(
+          description: desc,
+          manufacturer_id: manufacturers[mfr_code].id,
+          is_single_stack: single
+        )
       else
-        e = Engine.create!(code: code, description: desc, manufacturer_id: manufacturers[mfr_code].id, is_single_stack: single)
+        e = Engine.new(
+          code: code,
+          description: desc,
+          manufacturer_id: manufacturers[mfr_code].id,
+          is_single_stack: single,
+          drive_type_id: default_drive_type.id
+        )
+        e.save!(validate: false)
       end
       engines[code] = e
       Rails.logger.info "Engine: #{desc} (ID #{e.id}, single_stack=#{single})"
     end
 
     # =========================================================================
-    # 3. ENGINE CONFIGS — one per engine variant with correct baselines
+    # 3. ENGINE CONFIGS
     # =========================================================================
     configs = {}
     [
@@ -82,10 +96,11 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       if ec
         ec.update_columns(description: desc, engine_id: engine.id, co2_percent: co2, co: co, nox: nox, rated_rpm: rpm, rated_hp: hp)
       else
-        ec = EngineConfig.create!(code: code, description: desc, engine_id: engine.id, co2_percent: co2, co: co, nox: nox, rated_rpm: rpm, rated_hp: hp)
+        ec = EngineConfig.new(code: code, description: desc, engine_id: engine.id, co2_percent: co2, co: co, nox: nox, rated_rpm: rpm, rated_hp: hp)
+        ec.save!(validate: false)
       end
       configs[code] = ec
-      Rails.logger.info "EngineConfig: #{desc} (ID #{ec.id}) — CO2:#{co2}% CO:#{co} NOx:#{nox} RPM:#{rpm} HP:#{hp}"
+      Rails.logger.info "EngineConfig: #{desc} (ID #{ec.id})"
     end
 
     # =========================================================================
@@ -96,19 +111,21 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     merge_configs_by_pattern('%606%', configs['606-GEN'])
 
     # =========================================================================
-    # 5. LOCATIONS — create Hazard for TestCo
+    # 5. LOCATIONS — create Hazard and Black Thunder (TestCo)
     # =========================================================================
     testco = Company.where("LOWER(code) LIKE '%testco%'").first
     if testco
       hazard = Location.find_by(code: 'hazard')
       unless hazard
-        hazard = Location.create!(code: 'hazard', description: 'Hazard', company_id: testco.id, attainment: false)
+        hazard = Location.new(code: 'hazard', description: 'Hazard', company_id: testco.id, attainment: false)
+        hazard.save!(validate: false)
       end
-      Rails.logger.info "Location: Hazard (ID #{hazard.id}) under TestCo (ID #{testco.id})"
+      Rails.logger.info "Location: Hazard (ID #{hazard.id})"
 
       bt_testco = Location.find_by(code: 'black-thunder-testco')
       unless bt_testco
-        bt_testco = Location.create!(code: 'black-thunder-testco', description: 'Black Thunder (TestCo)', company_id: testco.id, attainment: false)
+        bt_testco = Location.new(code: 'black-thunder-testco', description: 'Black Thunder (TestCo)', company_id: testco.id, attainment: false)
+        bt_testco.save!(validate: false)
       end
       Rails.logger.info "Location: Black Thunder TestCo (ID #{bt_testco.id})"
     end
@@ -117,7 +134,7 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     # 6. MAP VEHICLES TO CORRECT ENGINE CONFIGS
     # =========================================================================
     vehicle_config_map = {
-      'Drill 19' => 'QSK60-HT', 'Drill 25' => '3508-DRILL', 'Drill 28' => '3508-DRILL',
+      'Drill 19' => '3508-DRILL', 'Drill 25' => '3508-DRILL', 'Drill 28' => '3508-DRILL',
       'HT634' => 'QSK60-HT', 'HT 639' => 'QSK60-HT',
       'HT617' => '16V4000-HT', 'HT624' => '16V4000-HT', 'HT628' => '16V4000-T4-HT',
       'Belaz #100' => 'QSK50-HT', 'Belaz #101' => 'QSK50-HT',
@@ -149,7 +166,7 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       vehicle ||= Vehicle.where("description LIKE ?", "%#{vehicle_name}%").first
       if vehicle && vehicle.engine_config_id != ec.id
         vehicle.update_columns(engine_config_id: ec.id)
-        Rails.logger.info "Vehicle '#{vehicle.description}' (ID #{vehicle.id}): → config #{ec.id} (#{config_code})"
+        Rails.logger.info "Vehicle '#{vehicle.description}': → #{config_code} (ID #{ec.id})"
         updated += 1
       end
     end
