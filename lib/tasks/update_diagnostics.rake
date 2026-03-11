@@ -4,18 +4,17 @@ namespace :update do
     puts "Updating diagnostic statuses for all vehicles..."
     updated = 0
     skipped = 0
-
     Vehicle.find_each do |vehicle|
-      # Get most recent input by ID (highest ID = most recent import)
       input = vehicle.inputs.order(id: :desc).first
       if input.nil?
         skipped += 1
         next
       end
-
       begin
         status = DiagnosticService.calculate_status(input)
-        vehicle.update_column(:last_diagnostic_status, status)
+        attrs = { last_diagnostic_status: status }
+        attrs[:last_test_date] = input.submitted if vehicle.respond_to?(:last_test_date)
+        vehicle.update_columns(attrs)
         updated += 1
         print "."
       rescue => e
@@ -23,7 +22,6 @@ namespace :update do
         skipped += 1
       end
     end
-
     puts "\nDone. Updated: #{updated}, Skipped: #{skipped}"
   end
 end
