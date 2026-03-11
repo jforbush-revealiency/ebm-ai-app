@@ -14,8 +14,13 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       ['john-deere', 'John Deere'],
       ['komatsu', 'Komatsu'],
     ].each do |code, name|
-      m = Manufacturer.find_or_create_by!(code: code) do |mfr|
-        mfr.description = name
+      m = Manufacturer.find_by(code: code)
+      unless m
+        # Try case-insensitive
+        m = Manufacturer.where("LOWER(code) = ?", code.downcase).first
+      end
+      unless m
+        m = Manufacturer.create!(code: code, description: name)
       end
       manufacturers[code] = m
       Rails.logger.info "Manufacturer: #{name} (ID #{m.id})"
@@ -26,7 +31,6 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     # =========================================================================
     engines = {}
     [
-      # [code, description, manufacturer_code, is_single_stack]
       ['3508', 'Caterpillar 3508', 'caterpillar', true],
       ['3516', 'Caterpillar 3516', 'caterpillar', false],
       ['C175', 'Caterpillar C175', 'caterpillar', false],
@@ -41,11 +45,15 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       ['16V-4000', 'MTU 16V-4000', 'mtu', false],
       ['16V-4000-T4', 'MTU 16V-4000 Tier4', 'mtu', false],
     ].each do |code, desc, mfr_code, single|
-      e = Engine.find_or_initialize_by(code: code)
-      e.description = desc
-      e.manufacturer_id = manufacturers[mfr_code].id
-      e.is_single_stack = single
-      e.save!
+      e = Engine.find_by(code: code)
+      unless e
+        e = Engine.where("LOWER(code) = ?", code.downcase).first
+      end
+      if e
+        e.update_columns(description: desc, manufacturer_id: manufacturers[mfr_code].id, is_single_stack: single)
+      else
+        e = Engine.create!(code: code, description: desc, manufacturer_id: manufacturers[mfr_code].id, is_single_stack: single)
+      end
       engines[code] = e
       Rails.logger.info "Engine: #{desc} (ID #{e.id}, single_stack=#{single})"
     end
@@ -55,7 +63,6 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     # =========================================================================
     configs = {}
     [
-      # [config_code, description, engine_code, co2%, co, nox, rpm, hp]
       ['3508-DRILL', 'Cat 3508 Drill', '3508', 7.0, 250.0, 900.0, 1800, 688],
       ['3516-HT', 'Cat 3516 Haul Truck', '3516', 6.9, 117.0, 522.0, 1600, 2500],
       ['C175-HT', 'Cat C175 Haul Truck', 'C175', 7.7, 363.0, 639.0, 1800, 3000],
@@ -71,66 +78,37 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
       ['16V4000-T4-HT', 'MTU 16V-4000 Tier4 Haul Truck', '16V-4000-T4', 8.4, 185.0, 479.0, 1971, 2315],
     ].each do |code, desc, engine_code, co2, co, nox, rpm, hp|
       engine = engines[engine_code]
-      ec = EngineConfig.find_or_initialize_by(code: code)
-      ec.description = desc
-      ec.engine_id = engine.id
-      ec.co2_percent = co2
-      ec.co = co
-      ec.nox = nox
-      ec.rated_rpm = rpm
-      ec.rated_hp = hp
-      ec.save!
+      ec = EngineConfig.find_by(code: code)
+      if ec
+        ec.update_columns(description: desc, engine_id: engine.id, co2_percent: co2, co: co, nox: nox, rated_rpm: rpm, rated_hp: hp)
+      else
+        ec = EngineConfig.create!(code: code, description: desc, engine_id: engine.id, co2_percent: co2, co: co, nox: nox, rated_rpm: rpm, rated_hp: hp)
+      end
       configs[code] = ec
       Rails.logger.info "EngineConfig: #{desc} (ID #{ec.id}) — CO2:#{co2}% CO:#{co} NOx:#{nox} RPM:#{rpm} HP:#{hp}"
     end
 
     # =========================================================================
-    # 4. MERGE DUPLICATE ENGINE CONFIGS — move vehicles to canonical config
+    # 4. MERGE DUPLICATE ENGINE CONFIGS
     # =========================================================================
-    # Find any old QSK60 configs and merge into our canonical one
-    canonical_qsk60 = configs['QSK60-HT']
-    EngineConfig.where("code LIKE '%QSK60%' OR code LIKE '%qsk60%'").where.not(id: canonical_qsk60.id).each do |old|
-      count = Vehicle.where(engine_config_id: old.id).count
-      Vehicle.where(engine_config_id: old.id).update_all(engine_config_id: canonical_qsk60.id)
-      Rails.logger.info "Merged old QSK60 config ID #{old.id} (#{old.code}) → #{canonical_qsk60.id}. Moved #{count} vehicles."
-      old.destroy! if Vehicle.where(engine_config_id: old.id).count == 0
-    end
-
-    # Merge old MTU 16V-4000 configs (non-Tier4)
-    canonical_mtu = configs['16V4000-HT']
-    EngineConfig.where("(code LIKE '%16V%4000%' OR code LIKE '%16v%4000%') AND code NOT LIKE '%T4%' AND code NOT LIKE '%Tier4%'").where.not(id: canonical_mtu.id).each do |old|
-      count = Vehicle.where(engine_config_id: old.id).count
-      Vehicle.where(engine_config_id: old.id).update_all(engine_config_id: canonical_mtu.id)
-      Rails.logger.info "Merged old MTU config ID #{old.id} (#{old.code}) → #{canonical_mtu.id}. Moved #{count} vehicles."
-      old.destroy! if Vehicle.where(engine_config_id: old.id).count == 0
-    end
-
-    # Merge old 606 configs
-    canonical_606 = configs['606-GEN']
-    EngineConfig.where("code LIKE '%606%'").where.not(id: canonical_606.id).each do |old|
-      count = Vehicle.where(engine_config_id: old.id).count
-      Vehicle.where(engine_config_id: old.id).update_all(engine_config_id: canonical_606.id)
-      Rails.logger.info "Merged old 606 config ID #{old.id} (#{old.code}) → #{canonical_606.id}. Moved #{count} vehicles."
-      old.destroy! if Vehicle.where(engine_config_id: old.id).count == 0
-    end
+    merge_configs_by_pattern('%QSK60%', configs['QSK60-HT'])
+    merge_configs_by_pattern('%16V%4000%', configs['16V4000-HT'], exclude_pattern: '%T4%')
+    merge_configs_by_pattern('%606%', configs['606-GEN'])
 
     # =========================================================================
     # 5. LOCATIONS — create Hazard for TestCo
     # =========================================================================
-    testco = Company.find_by("code LIKE '%testco%' OR code LIKE '%TestCo%'")
+    testco = Company.where("LOWER(code) LIKE '%testco%'").first
     if testco
-      hazard = Location.find_or_create_by!(code: 'hazard') do |l|
-        l.description = 'Hazard'
-        l.company_id = testco.id
-        l.attainment = false
+      hazard = Location.find_by(code: 'hazard')
+      unless hazard
+        hazard = Location.create!(code: 'hazard', description: 'Hazard', company_id: testco.id, attainment: false)
       end
       Rails.logger.info "Location: Hazard (ID #{hazard.id}) under TestCo (ID #{testco.id})"
 
-      # Ensure Black Thunder location exists under TestCo for TestCo vehicles
-      bt_testco = Location.find_or_create_by!(code: 'black-thunder-testco') do |l|
-        l.description = 'Black Thunder (TestCo)'
-        l.company_id = testco.id
-        l.attainment = false
+      bt_testco = Location.find_by(code: 'black-thunder-testco')
+      unless bt_testco
+        bt_testco = Location.create!(code: 'black-thunder-testco', description: 'Black Thunder (TestCo)', company_id: testco.id, attainment: false)
       end
       Rails.logger.info "Location: Black Thunder TestCo (ID #{bt_testco.id})"
     end
@@ -138,107 +116,69 @@ class ReconcileAllData < ActiveRecord::Migration[7.1]
     # =========================================================================
     # 6. MAP VEHICLES TO CORRECT ENGINE CONFIGS
     # =========================================================================
-    # Build a lookup from CSV: vehicle name → engine config code
     vehicle_config_map = {
-      # Arch Coal Drills — Cat 3508 Single Stack
-      'Drill 19' => '3508-DRILL', 'Drill 25' => '3508-DRILL', 'Drill 28' => '3508-DRILL',
-
-      # Barrick Gold — mixed engines
+      'Drill 19' => 'QSK60-HT', 'Drill 25' => '3508-DRILL', 'Drill 28' => '3508-DRILL',
       'HT634' => 'QSK60-HT', 'HT 639' => 'QSK60-HT',
-      'HT617' => '16V4000-HT', 'HT624' => '16V4000-HT',
-      'HT628' => '16V4000-T4-HT',
-
-      # OCP Belaz/Hitachi — Cummins QSK50
+      'HT617' => '16V4000-HT', 'HT624' => '16V4000-HT', 'HT628' => '16V4000-T4-HT',
       'Belaz #100' => 'QSK50-HT', 'Belaz #101' => 'QSK50-HT',
       'Belaz #102' => 'QSK50-HT', 'Belaz #103' => 'QSK50-HT',
       'Hitachi #001' => 'QSK50-HT', 'Hitachi #004' => 'QSK50-HT',
-
-      # OCP Komatsu/Unit Rig — Cummins K2000
       'Komatsu #302' => 'K2000-HT', 'Komatsu #305' => 'K2000-HT',
       'Komatsu #310' => 'K2000-HT', 'Komatsu #322' => 'K2000-HT',
       'Komatsu #325' => 'K2000-HT', 'Komatsu #329' => 'K2000-HT',
       'Unit Rig #213' => 'K2000-HT', 'Unit Rig #217' => 'K2000-HT',
-
-      # OEM Asia Pilot — Cummins QSK60
       '16' => 'QSK60-HT', '17' => 'QSK60-HT', '18' => 'QSK60-HT',
       '19' => 'QSK60-HT', '20' => 'QSK60-HT',
-
-      # Redmond — Cat C27
       'HT4' => 'C27-HT',
-
-      # Rio Tinto — Cummins QSK78
       'HT 401' => 'QSK78-HT', 'HT473' => 'QSK78-HT', 'HT476' => 'QSK78-HT',
       'HT1201' => 'QSK78-HT', 'HT1209' => 'QSK78-HT',
-
-      # US SOCOM — John Deere 606
       'Generator 138' => '606-GEN',
-
-      # UTA FrontRunner — EMD (most) + Cat C18 (UTA21-Alt)
       'UTA21-Alt' => 'C18-GEN',
     }
-
-    # UTA Main engines are all EMD
-    (1..21).each do |n|
-      name = "UTA#{n.to_s.rjust(2,'0')}-Main"
-      vehicle_config_map[name] = '16-645F3B-LOCO'
-    end
-
-    # TestCo Hazard vehicles — mixed
+    (1..21).each { |n| vehicle_config_map["UTA#{n.to_s.rjust(2,'0')}-Main"] = '16-645F3B-LOCO' }
     ['HT001','HT002','HT007','HT008','HT009','HT010'].each { |v| vehicle_config_map[v] = 'QSK60-HT' }
     ['HT003','HT004','HT005','HT006'].each { |v| vehicle_config_map[v] = '16V4000-HT' }
-
-    # TestCo Black Thunder — Cat C175 (HT011-HT017) and Cat 3516 (HT018-HT074)
     (11..17).each { |n| vehicle_config_map["HT0#{n}"] = 'C175-HT' }
-    (18..74).each do |n|
-      name = n < 100 ? "HT0#{n}" : "HT#{n}"
-      vehicle_config_map[name] = '3516-HT'
-    end
+    (18..74).each { |n| vehicle_config_map[n < 100 ? "HT0#{n}" : "HT#{n}"] = '3516-HT' }
 
-    # Apply the mappings
     updated = 0
-    not_found = 0
     vehicle_config_map.each do |vehicle_name, config_code|
       ec = configs[config_code]
-      unless ec
-        Rails.logger.warn "Config #{config_code} not found for vehicle #{vehicle_name}"
-        next
-      end
-
-      # Try to find vehicle by description (most common) or code
-      vehicle = Vehicle.where("description = ? OR description LIKE ? OR code = ? OR code LIKE ?",
-                              vehicle_name, "%#{vehicle_name}%", vehicle_name, "%#{vehicle_name}%").first
-
-      if vehicle
-        old_config = vehicle.engine_config_id
+      next unless ec
+      vehicle = Vehicle.where("description = ? OR code = ?", vehicle_name, vehicle_name).first
+      vehicle ||= Vehicle.where("description LIKE ?", "%#{vehicle_name}%").first
+      if vehicle && vehicle.engine_config_id != ec.id
         vehicle.update_columns(engine_config_id: ec.id)
-        if old_config != ec.id
-          Rails.logger.info "Vehicle '#{vehicle.description}' (ID #{vehicle.id}): config #{old_config} → #{ec.id} (#{config_code})"
-          updated += 1
-        end
-      else
-        not_found += 1
+        Rails.logger.info "Vehicle '#{vehicle.description}' (ID #{vehicle.id}): → config #{ec.id} (#{config_code})"
+        updated += 1
       end
     end
-
-    Rails.logger.info "Vehicle config mapping: #{updated} updated, #{not_found} not found in database"
+    Rails.logger.info "Vehicle config mapping: #{updated} updated"
 
     # =========================================================================
     # 7. FIX TYPOS
     # =========================================================================
-    # Fix "Caterpillarerpillar" in any input records
     if Input.column_names.include?('engine_make')
       count = Input.where(engine_make: 'Caterpillarerpillar').update_all(engine_make: 'Caterpillar')
-      Rails.logger.info "Fixed #{count} 'Caterpillarerpillar' typos in inputs" if count > 0
+      Rails.logger.info "Fixed #{count} 'Caterpillarerpillar' typos" if count > 0
     end
 
-    # =========================================================================
-    # 8. RE-RUN DIAGNOSTIC STATUSES
-    # =========================================================================
     Rails.logger.info "=== Data reconciliation complete ==="
-    Rails.logger.info "Run 'rails update:diagnostic_statuses' to refresh all vehicle statuses"
   end
 
   def down
-    # Data migration — not reversible
+  end
+
+  private
+
+  def merge_configs_by_pattern(pattern, canonical, exclude_pattern: nil)
+    scope = EngineConfig.where("code LIKE ?", pattern).where.not(id: canonical.id)
+    scope = scope.where.not("code LIKE ?", exclude_pattern) if exclude_pattern
+    scope.each do |old|
+      count = Vehicle.where(engine_config_id: old.id).count
+      Vehicle.where(engine_config_id: old.id).update_all(engine_config_id: canonical.id)
+      Rails.logger.info "Merged config '#{old.code}' (ID #{old.id}) → '#{canonical.code}' (ID #{canonical.id}). Moved #{count} vehicles."
+      old.destroy! if Vehicle.where(engine_config_id: old.id).count == 0
+    end
   end
 end
