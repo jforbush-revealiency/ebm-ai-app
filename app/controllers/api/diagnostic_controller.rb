@@ -16,11 +16,11 @@ class Api::DiagnosticController < ApplicationController
     very_low_nox   = thresh.('Very_Low_NOx',  -0.35)
     nox_upper_max  = thresh.('Nox_Upper_Max',  0.30)
 
-    rated_rpm  = engine_config&.rated_rpm.to_f
-    rated_hp   = engine_config&.rated_hp.to_f
-    rated_co2  = engine_config&.co2_percent.to_f
-    rated_co   = engine_config&.co.to_f
-    rated_nox  = engine_config&.nox.to_f
+    rated_rpm = engine_config&.rated_rpm.to_f
+    rated_hp  = engine_config&.rated_hp.to_f
+    rated_co2 = engine_config&.co2_percent.to_f
+    rated_co  = engine_config&.co.to_f
+    rated_nox = engine_config&.nox.to_f
 
     sections = {}
 
