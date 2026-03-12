@@ -1,6 +1,11 @@
 module Api
   class InputsController < BaseController
     def create
+      # Extract fields that aren't on the Input model
+      extra_fields = {}
+      extra_fields[:config_verified] = params[:input].delete(:config_verified)
+      extra_fields[:engine_codes_notes] = params[:input].delete(:engine_codes_notes)
+
       input = Input.new(input_params)
       input.test_type = 'manual'
       input.auto_generated = false
@@ -37,9 +42,8 @@ module Api
         :alternator_rpm, :alternator_hp,
         :left_bank_co2_percent, :left_bank_co, :left_bank_nox,
         :right_bank_co2_percent, :right_bank_co, :right_bank_nox,
-        :has_engine_codes, :engine_codes_notes,
-        :test_type, :submitter_first_name, :submitter_last_name,
-        :submitter_email
+        :has_engine_codes, :test_type,
+        :submitter_first_name, :submitter_last_name, :submitter_email
       )
     end
   end
