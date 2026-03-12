@@ -193,27 +193,3 @@ class Api::DiagnosticController < ApplicationController
     render json: { error: e.message }, status: :internal_server_error
   end
 end
-```
-
-Commit message: `Add rated_baselines to diagnostic API response`
-
-Then paste this into Lovable:
-```
-Update the Raw Emissions Data table on the diagnostic report page.
-The API now returns a rated_baselines object in the diagnostic response:
-{
-  rated_baselines: {
-    co2_percent: 9.2,
-    co: 300.0,
-    nox: 1020.0,
-    rpm: 1909.0,
-    hp: 2300.0
-  }
-}
-
-Use rated_baselines.co2_percent for the CO2 Rated Baseline column,
-rated_baselines.co for CO, and rated_baselines.nox for NOx.
-Calculate variance as: ((actual - rated) / rated * 100).
-If rated_baselines is missing or a value is null, show "—".
-Do NOT try to parse rated values from message text anymore.
-Give me the COMPLETE replacement file.
