@@ -46,19 +46,3 @@ module Api
     end
   end
 end
-```
-
-Commit that, then paste this into Lovable to fix the test history display:
-```
-On the diagnostic report page, fix the Test History section:
-
-1. Show ALL tests for the vehicle, not just the first 10. 
-   Remove any limit/slice on the test history list.
-
-2. Sort tests by date DESCENDING (newest first), so the 
-   most recent test appears at the top of the list.
-
-3. The "Viewing" indicator should be on the most recent 
-   test by default (the one at the top of the sorted list).
-
-Give me the COMPLETE replacement file.
