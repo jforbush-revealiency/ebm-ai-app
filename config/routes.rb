@@ -15,6 +15,7 @@ Rails.application.routes.draw do
     resources :engines, only: [:index, :show, :update]
     resources :manufacturers, only: [:index, :show]
     get 'inputs/:id/diagnostic', to: 'diagnostic#show'
+    resources :inputs, only: [:create]
     get 'debug/engine_configs', to: 'debug#engine_configs'
     get 'debug/parameters', to: 'debug#parameters'
   end
